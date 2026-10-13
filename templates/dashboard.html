@@ -22,8 +22,10 @@
       --accent-green: #22c55e;
       --accent-red: #ef4444;
       --accent-orange: #f59e0b;
+      --accent-purple: #8b5cf6;
       --status-healthy: #22c55e;
-      --status-error: #ef4444;
+      --status-degraded: #f59e0b;
+      --status-unhealthy: #ef4444;
       --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
       --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
       --radius: 8px;
@@ -250,7 +252,7 @@
       margin: 0 auto;
     }
 
-    /* Info Banner */
+    /* Banners */
     .info-banner {
       background-color: #fef3c7;
       border-left: 4px solid var(--accent-orange);
@@ -271,7 +273,6 @@
       margin-top: 1px;
     }
 
-    /* Error Alert */
     .error-banner {
       background-color: #fef2f2;
       border-left: 4px solid var(--accent-red);
@@ -335,7 +336,13 @@
       border: 1px solid #bbf7d0;
     }
 
-    .status-unavailable {
+    .status-degraded {
+      background-color: #fef3c7;
+      color: #b45309;
+      border: 1px solid #fde68a;
+    }
+
+    .status-unhealthy {
       background-color: #fee2e2;
       color: #b91c1c;
       border: 1px solid #fecaca;
@@ -347,10 +354,20 @@
       border: 1px solid #e2e8f0;
     }
 
+    .status-diagnostic-pill {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      background-color: #f8fafc;
+      padding: 4px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      max-width: 400px;
+    }
+
     .status-meta-group {
       display: flex;
       align-items: center;
-      gap: 32px;
+      gap: 28px;
       flex-wrap: wrap;
     }
 
@@ -377,14 +394,14 @@
     /* Metric Cards Grid */
     .metric-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 18px;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
     }
 
     .metric-card {
       background-color: var(--card-bg);
       border-radius: var(--radius);
-      padding: 20px;
+      padding: 18px;
       box-shadow: var(--shadow-sm);
       border: 1px solid var(--border-color);
       display: flex;
@@ -411,18 +428,19 @@
 
     .metric-card.accent-blue::before { background-color: var(--accent-blue); }
     .metric-card.accent-green::before { background-color: var(--accent-green); }
-    .metric-card.accent-red::before { background-color: var(--accent-red); }
     .metric-card.accent-orange::before { background-color: var(--accent-orange); }
+    .metric-card.accent-red::before { background-color: var(--accent-red); }
+    .metric-card.accent-purple::before { background-color: var(--accent-purple); }
 
     .metric-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
 
     .metric-title {
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       font-weight: 600;
       color: var(--text-muted);
       text-transform: uppercase;
@@ -430,25 +448,232 @@
     }
 
     .metric-card-icon {
-      font-size: 1.2rem;
+      font-size: 1.15rem;
       opacity: 0.8;
     }
 
     .metric-value {
-      font-size: 2.1rem;
+      font-size: 1.95rem;
       font-weight: 800;
       color: var(--text-main);
       line-height: 1.1;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
       letter-spacing: -0.03em;
     }
 
     .metric-subtext {
-      font-size: 0.78rem;
+      font-size: 0.74rem;
       color: var(--text-muted);
     }
 
-    /* Response Time Card & Charts */
+    /* Demo Scenarios Panel */
+    .demo-panel-card {
+      background-color: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      padding: 22px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .demo-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .demo-panel-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .demo-token-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .demo-token-input {
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 5px 10px;
+      font-size: 0.8rem;
+      font-family: monospace;
+      width: 150px;
+      outline: none;
+    }
+
+    .demo-token-input:focus {
+      border-color: var(--accent-blue);
+    }
+
+    .btn-save-token {
+      background-color: #f1f5f9;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-save-token:hover {
+      background-color: #e2e8f0;
+    }
+
+    .demo-notice-bar {
+      background-color: #f8fafc;
+      border-radius: 6px;
+      padding: 10px 14px;
+      border: 1px solid var(--border-color);
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .demo-feedback-box {
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      transition: var(--transition);
+    }
+
+    .demo-feedback-success {
+      background-color: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+
+    .demo-feedback-warning {
+      background-color: #fffbeb;
+      color: #92400e;
+      border: 1px solid #fde68a;
+    }
+
+    .demo-feedback-error {
+      background-color: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .demo-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .scenario-box {
+      background-color: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+      transition: var(--transition);
+    }
+
+    .scenario-box:hover {
+      border-color: #cbd5e1;
+      background-color: #ffffff;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .scenario-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .scenario-desc {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    .scenario-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: auto;
+    }
+
+    .scenario-input {
+      width: 65px;
+      padding: 6px 8px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      font-size: 0.84rem;
+      text-align: center;
+      outline: none;
+    }
+
+    .scenario-input:focus {
+      border-color: var(--accent-blue);
+    }
+
+    .btn-scenario {
+      flex: 1;
+      padding: 7px 12px;
+      border-radius: 5px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: var(--transition);
+      color: #ffffff;
+    }
+
+    .btn-scenario:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-scenario.blue { background-color: var(--accent-blue); }
+    .btn-scenario.blue:hover { background-color: #2563eb; }
+
+    .btn-scenario.red { background-color: var(--accent-red); }
+    .btn-scenario.red:hover { background-color: #dc2626; }
+
+    .btn-scenario.orange { background-color: var(--accent-orange); }
+    .btn-scenario.orange:hover { background-color: #d97706; }
+
+    .btn-scenario.purple { background-color: var(--accent-purple); }
+    .btn-scenario.purple:hover { background-color: #7c3aed; }
+
+    .btn-scenario.green { background-color: var(--accent-green); }
+    .btn-scenario.green:hover { background-color: #16a34a; }
+
+    .btn-scenario.dark { background-color: #475569; }
+    .btn-scenario.dark:hover { background-color: #334155; }
+
+    /* Cards Full Width */
     .card-full {
       background-color: var(--card-bg);
       border-radius: var(--radius);
@@ -465,9 +690,7 @@
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
-      gap: 14px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid var(--border-color);
+      gap: 12px;
     }
 
     .card-title {
@@ -482,173 +705,142 @@
     .response-stats-badges {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       flex-wrap: wrap;
     }
 
     .stat-pill {
-      background-color: #f8fafc;
-      border: 1px solid var(--border-color);
-      padding: 5px 12px;
-      border-radius: 6px;
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       color: var(--text-muted);
+      background-color: #f8fafc;
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
     }
 
     .stat-pill strong {
       color: var(--text-main);
-      margin-left: 4px;
     }
 
     .chart-container {
       position: relative;
+      height: 250px;
       width: 100%;
-      min-height: 240px;
-      max-height: 320px;
     }
 
-    /* Activity Card Layout */
+    /* Activity Grid Layout */
     .activity-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 350px 1fr;
       gap: 20px;
     }
 
-    /* Table Styling */
     .table-container {
       width: 100%;
       overflow-x: auto;
-      border-radius: 6px;
       border: 1px solid var(--border-color);
+      border-radius: 6px;
+      max-height: 280px;
     }
 
-    table.activity-table {
+    .activity-table {
       width: 100%;
       border-collapse: collapse;
       text-align: left;
-      font-size: 0.85rem;
+      font-size: 0.84rem;
     }
 
-    table.activity-table th {
+    .activity-table th {
       background-color: #f8fafc;
       color: var(--text-muted);
       font-weight: 600;
-      padding: 10px 14px;
+      padding: 9px 12px;
       border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 10;
       text-transform: uppercase;
-      font-size: 0.74rem;
+      font-size: 0.72rem;
       letter-spacing: 0.04em;
     }
 
-    table.activity-table td {
-      padding: 11px 14px;
+    .activity-table td {
+      padding: 9px 12px;
       border-bottom: 1px solid #f1f5f9;
       color: var(--text-main);
       white-space: nowrap;
     }
 
-    table.activity-table tr:last-child td {
+    .activity-table tr:last-child td {
       border-bottom: none;
     }
 
-    table.activity-table tr:hover td {
-      background-color: #fbfcfe;
+    .activity-table tr:hover td {
+      background-color: #f8fafc;
     }
 
-    .badge-method {
+    /* Status Badges */
+    .badge-status {
       display: inline-block;
       padding: 2px 7px;
       border-radius: 4px;
-      font-size: 0.74rem;
+      font-size: 0.75rem;
       font-weight: 700;
-      letter-spacing: 0.02em;
     }
 
-    .method-get { background-color: #e0f2fe; color: #0369a1; }
-    .method-post { background-color: #dcfce7; color: #15803d; }
-    .method-put { background-color: #fef3c7; color: #b45309; }
-    .method-delete { background-color: #fee2e2; color: #b91c1c; }
+    .badge-2xx { background-color: #dcfce7; color: #15803d; }
+    .badge-3xx { background-color: #e0f2fe; color: #0369a1; }
+    .badge-4xx { background-color: #fef3c7; color: #b45309; }
+    .badge-5xx { background-color: #fee2e2; color: #b91c1c; }
 
-    .badge-status {
+    .badge-method {
       display: inline-block;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 0.76rem;
-      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      font-family: monospace;
     }
 
-    .badge-2xx { background-color: #dcfce7; color: #166534; }
-    .badge-3xx { background-color: #e0f2fe; color: #075985; }
-    .badge-4xx { background-color: #fef3c7; color: #9a3412; }
-    .badge-5xx { background-color: #fee2e2; color: #991b1b; }
+    .method-get { background-color: #eff6ff; color: #1d4ed8; }
+    .method-post { background-color: #f0fdf4; color: #15803d; }
+    .method-delete { background-color: #fef2f2; color: #b91c1c; }
 
-    /* Empty state */
     .empty-state {
-      padding: 36px 20px;
+      padding: 32px 16px;
       text-align: center;
       color: var(--text-muted);
       font-size: 0.88rem;
     }
 
-    .empty-state-icon {
-      font-size: 2rem;
-      margin-bottom: 8px;
-      display: block;
-      opacity: 0.6;
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+      .metric-grid { grid-template-columns: repeat(3, 1fr); }
+      .demo-grid { grid-template-columns: repeat(2, 1fr); }
     }
 
-    /* Responsive */
-    @media (max-width: 1024px) {
-      .metric-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-      .activity-grid {
-        grid-template-columns: 1fr;
-      }
+    @media (max-width: 900px) {
+      .metric-grid { grid-template-columns: repeat(2, 1fr); }
+      .activity-grid { grid-template-columns: 1fr; }
+      .demo-grid { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 768px) {
-      body {
-        flex-direction: column;
-      }
+      body { flex-direction: column; }
       .sidebar {
         width: 100%;
         height: auto;
         position: static;
         flex-direction: row;
-        align-items: center;
         justify-content: space-between;
         padding: 10px 16px;
       }
-      .sidebar-header {
-        padding: 0;
-        border-bottom: none;
-      }
-      .sidebar-nav {
-        flex-direction: row;
-        padding: 0;
-        gap: 8px;
-      }
-      .nav-link.active {
-        border-left: none;
-        border-bottom: 2px solid var(--accent-blue);
-      }
-      .sidebar-footer {
-        display: none;
-      }
-      .topbar {
-        padding: 12px 16px;
-      }
-      .content-area {
-        padding: 16px;
-      }
-      .metric-grid {
-        grid-template-columns: 1fr;
-      }
-      .status-card {
-        flex-direction: column;
-        align-items: flex-start;
-      }
+      .sidebar-header { padding: 0; border-bottom: none; }
+      .sidebar-nav { flex-direction: row; padding: 0; }
+      .sidebar-footer { display: none; }
+      .topbar { padding: 12px 16px; }
+      .content-area { padding: 16px; }
+      .metric-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -671,7 +863,7 @@
     </nav>
     <div class="sidebar-footer">
       <div class="footer-title">Cloud Computing FT-III</div>
-      <div>v1.0.0 • Production Build</div>
+      <div>v1.0.0 • Dynamic Telemetry</div>
     </div>
   </aside>
 
@@ -701,7 +893,7 @@
       <div id="errorBanner" class="error-banner">
         <div>
           <strong>⚠ Connection Warning:</strong>
-          <span id="errorMessage">Unable to communicate with the monitoring API. Showing last cached data.</span>
+          <span id="errorMessage">Unable to communicate with the monitoring API. Showing cached telemetry.</span>
         </div>
         <button class="btn-retry" onclick="handleManualRefresh()">Retry Now</button>
       </div>
@@ -710,7 +902,7 @@
       <div class="info-banner">
         <span class="banner-icon">ℹ</span>
         <div>
-          <strong>In-Memory Metrics:</strong> All metrics are stored in application memory and will reset when the server restarts. This is suitable for demonstration purposes.
+          <strong>In-Memory Metrics:</strong> All metrics are stored in application memory and will reset when the server process restarts. Demonstrations generate real backend traffic reflected in live charts.
         </div>
       </div>
 
@@ -719,6 +911,9 @@
         <div class="status-badge-container">
           <span id="statusBadge" class="status-badge status-loading">
             ● Checking Status...
+          </span>
+          <span id="statusDiagnostic" class="status-diagnostic-pill">
+            Evaluating health thresholds...
           </span>
         </div>
         <div class="status-meta-group">
@@ -737,7 +932,7 @@
         </div>
       </section>
 
-      <!-- Metric Cards Row (4 cards) -->
+      <!-- Metric Cards Row (5 cards) -->
       <section class="metric-grid">
         <!-- 1. Total Requests -->
         <div class="metric-card accent-blue">
@@ -746,20 +941,30 @@
             <span class="metric-card-icon">⚡</span>
           </div>
           <div class="metric-value" id="valTotalRequests">0</div>
-          <div class="metric-subtext">All inbound HTTP queries</div>
+          <div class="metric-subtext">Monitored inbound queries</div>
         </div>
 
         <!-- 2. Successful Requests -->
         <div class="metric-card accent-green">
           <div class="metric-header">
-            <span class="metric-title">Successful Requests</span>
+            <span class="metric-title">Successful</span>
             <span class="metric-card-icon">✓</span>
           </div>
           <div class="metric-value" id="valSuccessfulRequests">0</div>
-          <div class="metric-subtext">HTTP 2xx successful responses</div>
+          <div class="metric-subtext">HTTP 2xx & 3xx responses</div>
         </div>
 
-        <!-- 3. Server Errors -->
+        <!-- 3. Client Errors -->
+        <div class="metric-card accent-orange">
+          <div class="metric-header">
+            <span class="metric-title">Client Errors</span>
+            <span class="metric-card-icon">⚠</span>
+          </div>
+          <div class="metric-value" id="valClientErrors">0</div>
+          <div class="metric-subtext">HTTP 4xx client errors</div>
+        </div>
+
+        <!-- 4. Server Errors -->
         <div class="metric-card accent-red">
           <div class="metric-header">
             <span class="metric-title">Server Errors</span>
@@ -769,14 +974,159 @@
           <div class="metric-subtext">HTTP 5xx server exceptions</div>
         </div>
 
-        <!-- 4. Error Rate -->
-        <div class="metric-card accent-orange">
+        <!-- 5. Error Rate -->
+        <div class="metric-card accent-purple">
           <div class="metric-header">
             <span class="metric-title">Error Rate</span>
             <span class="metric-card-icon">%</span>
           </div>
           <div class="metric-value" id="valErrorRate">N/A</div>
-          <div class="metric-subtext">Server errors / total requests</div>
+          <div class="metric-subtext">5xx errors / total requests</div>
+        </div>
+      </section>
+
+      <!-- Interactive Demo Scenarios Control Panel -->
+      <section class="demo-panel-card">
+        <div class="demo-panel-header">
+          <div>
+            <div class="demo-panel-title">
+              <span>🎮 Interactive Demonstration Scenarios</span>
+            </div>
+            <div style="font-size:0.82rem; color:var(--text-muted); margin-top:3px;">
+              Trigger real HTTP traffic, simulate faults, test degradation thresholds, and demonstrate recovery in real-time.
+            </div>
+          </div>
+          <div class="demo-token-box">
+            <span id="demoModeBadge" class="badge-status badge-2xx">Demo Mode: Checking...</span>
+            <input type="password" id="demoTokenInput" placeholder="Demo Token (Optional)" class="demo-token-input" title="Enter DEMO_ACCESS_TOKEN if configured on the server" />
+            <button class="btn-save-token" onclick="saveDemoToken()">Save Token</button>
+          </div>
+        </div>
+
+        <!-- Feedback & Notification Box -->
+        <div id="demoFeedback" class="demo-feedback-box">
+          <span id="demoFeedbackIcon">ℹ</span>
+          <span id="demoFeedbackText">Ready for demonstration scenarios.</span>
+        </div>
+
+        <!-- Scenario Control Cards -->
+        <div class="demo-grid">
+          <!-- Scenario A: Normal Traffic -->
+          <div class="scenario-box">
+            <div>
+              <div class="scenario-title-row">
+                <span>🚀 A. Normal Traffic</span>
+              </div>
+              <div class="scenario-desc">
+                Dispatches real successful HTTP requests to measure baseline latency and increase traffic counters.
+              </div>
+            </div>
+            <div class="scenario-controls">
+              <input type="number" id="normalCountInput" min="1" max="20" value="5" class="scenario-input" title="Number of requests" />
+              <button id="btnNormalTraffic" class="btn-scenario blue" onclick="runNormalTraffic()">
+                <span>Generate Traffic</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Scenario B: Server Errors -->
+          <div class="scenario-box">
+            <div>
+              <div class="scenario-title-row">
+                <span>🔥 B. Server Errors (500)</span>
+              </div>
+              <div class="scenario-desc">
+                Triggers controlled HTTP 500 exceptions through a protected demo endpoint. Tests error counters and alerting.
+              </div>
+            </div>
+            <div class="scenario-controls">
+              <input type="number" id="serverErrorCountInput" min="1" max="5" value="1" class="scenario-input" title="Number of 500 errors" />
+              <button id="btnServerError" class="btn-scenario red" onclick="runServerError()">
+                <span>Trigger 500 Error</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Scenario C: Slow Responses -->
+          <div class="scenario-box">
+            <div>
+              <div class="scenario-title-row">
+                <span>⏳ C. Slow Responses</span>
+              </div>
+              <div class="scenario-desc">
+                Injects a bounded delay into a controlled request to test latency spikes and degradation thresholds.
+              </div>
+            </div>
+            <div class="scenario-controls">
+              <input type="number" id="slowDelayInput" min="50" max="1500" step="50" value="400" class="scenario-input" title="Delay in milliseconds" />
+              <span style="font-size:0.75rem; color:var(--text-muted);">ms</span>
+              <button id="btnSlowResponse" class="btn-scenario orange" onclick="runSlowResponse()">
+                <span>Simulate Delay</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Scenario D: Client Errors -->
+          <div class="scenario-box">
+            <div>
+              <div class="scenario-title-row">
+                <span>🔍 D. Client Errors (404)</span>
+              </div>
+              <div class="scenario-desc">
+                Generates controlled HTTP 404 client errors. Verified to track separately without inflating 5xx server errors.
+              </div>
+            </div>
+            <div class="scenario-controls">
+              <input type="number" id="clientErrorCountInput" min="1" max="5" value="1" class="scenario-input" title="Number of 404 errors" />
+              <button id="btnClientError" class="btn-scenario purple" onclick="runClientError()">
+                <span>Trigger 404 Error</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Scenario E: Recovery Test -->
+          <div class="scenario-box">
+            <div>
+              <div class="scenario-title-row">
+                <span>🔄 E. System Recovery</span>
+              </div>
+              <div class="scenario-desc">
+                Dispatches successful traffic to lower error rates and demonstrate automatic health status recovery.
+              </div>
+            </div>
+            <div class="scenario-controls">
+              <input type="number" id="recoveryCountInput" min="1" max="20" value="5" class="scenario-input" title="Recovery batch size" />
+              <button id="btnRecovery" class="btn-scenario green" onclick="runRecovery()">
+                <span>Run Recovery</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Scenario F: Reset Metrics -->
+          <div class="scenario-box">
+            <div>
+              <div class="scenario-title-row">
+                <span>🧹 F. Reset Telemetry</span>
+              </div>
+              <div class="scenario-desc">
+                Clears all in-memory telemetry counters, sample deques, and logs back to baseline zero after confirmation.
+              </div>
+            </div>
+            <div class="scenario-controls">
+              <button id="btnResetMetrics" class="btn-scenario dark" onclick="runResetMetrics()" style="width:100%;">
+                <span>Reset In-Memory Metrics</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="demo-notice-bar">
+          <div>
+            <strong>Observability Protocol:</strong> Every scenario button dispatches actual round-trip HTTP requests to the backend server.
+          </div>
+          <div>
+            Dashboard numbers and charts are refreshed directly from the <code>/metrics</code> API after each execution.
+          </div>
         </div>
       </section>
 
@@ -863,6 +1213,48 @@
     let countdownIntervalId = null;
     let isFetching = false;
 
+    // Retrieve saved Demo Token from sessionStorage
+    function getDemoToken() {
+      return sessionStorage.getItem('cloudmonitor_demo_token') || '';
+    }
+
+    function saveDemoToken() {
+      const input = document.getElementById('demoTokenInput');
+      const token = input.value.trim();
+      if (token) {
+        sessionStorage.setItem('cloudmonitor_demo_token', token);
+        showDemoFeedback('Demo access token saved for this session.', 'success');
+      } else {
+        sessionStorage.removeItem('cloudmonitor_demo_token');
+        showDemoFeedback('Demo token cleared.', 'info');
+      }
+    }
+
+    function showDemoFeedback(message, type = 'info') {
+      const box = document.getElementById('demoFeedback');
+      const text = document.getElementById('demoFeedbackText');
+      const icon = document.getElementById('demoFeedbackIcon');
+
+      box.style.display = 'flex';
+      box.className = 'demo-feedback-box';
+
+      if (type === 'success') {
+        box.classList.add('demo-feedback-success');
+        icon.textContent = '✓';
+      } else if (type === 'warning') {
+        box.classList.add('demo-feedback-warning');
+        icon.textContent = '⚠';
+      } else if (type === 'error') {
+        box.classList.add('demo-feedback-error');
+        icon.textContent = '✕';
+      } else {
+        box.classList.add('demo-feedback-success');
+        icon.textContent = 'ℹ';
+      }
+
+      text.textContent = message;
+    }
+
     // Format uptime into "Xd Xh Xm Xs"
     function formatUptime(seconds) {
       if (seconds === null || seconds === undefined || isNaN(seconds)) {
@@ -898,7 +1290,6 @@
     function updateResponseTimeChart(samples) {
       const ctx = document.getElementById('responseTimeChart').getContext('2d');
 
-      // Normalize samples
       let labels = [];
       let data = [];
 
@@ -910,7 +1301,7 @@
           } else if (item && typeof item === 'object') {
             const timeLabel = item.timestamp ? formatTimestamp(item.timestamp) : `#${idx + 1}`;
             labels.push(timeLabel);
-            const val = item.response_time_ms ?? item.duration_ms ?? item.latency_ms ?? item.value ?? 0;
+            const val = item.response_time ?? item.response_time_ms ?? item.duration_ms ?? item.value ?? 0;
             data.push(Number(Number(val).toFixed(2)));
           }
         });
@@ -924,6 +1315,7 @@
       if (responseTimeChartInstance) {
         responseTimeChartInstance.data.labels = labels;
         responseTimeChartInstance.data.datasets[0].data = data;
+        responseTimeChartInstance.data.datasets[0].pointRadius = data.length === 1 && labels[0] === 'No Data' ? 0 : 3;
         responseTimeChartInstance.update();
       } else {
         responseTimeChartInstance = new Chart(ctx, {
@@ -984,7 +1376,6 @@
     function updateActivityChart(recentRequests) {
       const ctx = document.getElementById('activityChart').getContext('2d');
 
-      // Tally HTTP status categories: 2xx, 3xx, 4xx, 5xx
       let count2xx = 0;
       let count3xx = 0;
       let count4xx = 0;
@@ -1074,7 +1465,6 @@
       countDisplay.textContent = recentRequests.length;
       tbody.innerHTML = '';
 
-      // Show in reverse chronological order if not already
       const rows = [...recentRequests].reverse();
 
       rows.slice(0, 15).forEach(req => {
@@ -1090,7 +1480,6 @@
         const method = (req.method || 'GET').toUpperCase();
         let methodClass = 'method-get';
         if (method === 'POST') methodClass = 'method-post';
-        else if (method === 'PUT' || method === 'PATCH') methodClass = 'method-put';
         else if (method === 'DELETE') methodClass = 'method-delete';
         methodCell.innerHTML = `<span class="badge-method ${methodClass}">${method}</span>`;
         tr.appendChild(methodCell);
@@ -1126,6 +1515,26 @@
       });
     }
 
+    // Check Demo Mode availability on the server
+    async function checkDemoStatus() {
+      try {
+        const res = await fetch('/api/demo/status');
+        if (res.ok) {
+          const data = await res.json();
+          const badge = document.getElementById('demoModeBadge');
+          if (data.demo_mode_enabled) {
+            badge.className = 'badge-status badge-2xx';
+            badge.textContent = data.token_required ? 'Demo Mode: Active (Token Protected)' : 'Demo Mode: Active (Open)';
+          } else {
+            badge.className = 'badge-status badge-4xx';
+            badge.textContent = 'Demo Mode: Disabled';
+          }
+        }
+      } catch (err) {
+        // Ignored
+      }
+    }
+
     // Main fetch & UI refresh function
     async function fetchDashboardData() {
       if (isFetching) return;
@@ -1136,7 +1545,6 @@
       refreshBtn.classList.add('spinning');
 
       try {
-        // Fetch all 3 endpoints concurrently
         const [healthRes, metricsRes, activityRes] = await Promise.allSettled([
           fetch('/health'),
           fetch('/metrics'),
@@ -1145,105 +1553,103 @@
 
         let hasError = false;
 
-        // Process /health
+        // 1. Process /health
         const statusBadge = document.getElementById('statusBadge');
+        const statusDiagnostic = document.getElementById('statusDiagnostic');
         const uptimeDisplay = document.getElementById('uptimeDisplay');
         const lastHealthCheckTime = document.getElementById('lastHealthCheckTime');
         const environmentHost = document.getElementById('environmentHost');
 
-        if (healthRes.status === 'fulfilled' && healthRes.value.ok) {
+        if (healthRes.status === 'fulfilled' && (healthRes.value.ok || healthRes.value.status === 503)) {
           const healthData = await healthRes.value.json();
-          const isHealthy = healthData.status === 'healthy' || healthData.status === 'UP' || healthData.status === 'ok';
+          const healthStatus = (healthData.status || '').toLowerCase();
 
-          if (isHealthy) {
+          if (healthStatus === 'healthy') {
             statusBadge.className = 'status-badge status-healthy';
             statusBadge.textContent = '● Healthy';
+          } else if (healthStatus === 'degraded') {
+            statusBadge.className = 'status-badge status-degraded';
+            statusBadge.textContent = '▲ Degraded';
           } else {
-            statusBadge.className = 'status-badge status-unavailable';
-            statusBadge.textContent = '● Unavailable';
+            statusBadge.className = 'status-badge status-unhealthy';
+            statusBadge.textContent = '✖ Unhealthy';
+          }
+
+          if (healthData.diagnostics && healthData.diagnostics.reason) {
+            statusDiagnostic.textContent = healthData.diagnostics.reason;
+          } else {
+            statusDiagnostic.textContent = 'All operational thresholds within standard parameters';
           }
 
           const uptimeSec = healthData.uptime_seconds ?? healthData.uptime;
           uptimeDisplay.textContent = formatUptime(uptimeSec);
           lastHealthCheckTime.textContent = formatTimestamp(healthData.timestamp || new Date());
-
-          if (healthData.hostname || healthData.environment) {
-            environmentHost.textContent = healthData.hostname || healthData.environment;
-          } else {
-            environmentHost.textContent = window.location.hostname || 'Cloud Host';
-          }
+          environmentHost.textContent = window.location.hostname || 'Cloud Host';
         } else {
           hasError = true;
-          statusBadge.className = 'status-badge status-unavailable';
-          statusBadge.textContent = '● Unavailable';
+          statusBadge.className = 'status-badge status-unhealthy';
+          statusBadge.textContent = '✖ Unavailable';
+          statusDiagnostic.textContent = 'Health probe unreachable';
         }
 
-        // Process /metrics
+        // 2. Process /metrics
         let samples = [];
         if (metricsRes.status === 'fulfilled' && metricsRes.value.ok) {
           const metricsData = await metricsRes.value.json();
 
-          // Metrics numbers
-          const total = metricsData.total_requests ?? metricsData.requests_total ?? 0;
-          const successful = metricsData.successful_requests ?? metricsData.success_requests ?? 0;
-          const errors = metricsData.error_count ?? metricsData.server_errors ?? metricsData.error_requests ?? 0;
+          const total = metricsData.total_requests ?? 0;
+          const successful = metricsData.successful_requests ?? 0;
+          const clientErrors = metricsData.client_error_count ?? 0;
+          const serverErrors = metricsData.server_error_count ?? metricsData.error_count ?? 0;
 
           document.getElementById('valTotalRequests').textContent = total.toLocaleString();
           document.getElementById('valSuccessfulRequests').textContent = successful.toLocaleString();
-          document.getElementById('valServerErrors').textContent = errors.toLocaleString();
+          document.getElementById('valClientErrors').textContent = clientErrors.toLocaleString();
+          document.getElementById('valServerErrors').textContent = serverErrors.toLocaleString();
 
-          // Error rate calculation (show N/A if total requests is 0)
+          // Error rate calculation (5xx / total)
           const errorRateElem = document.getElementById('valErrorRate');
           if (total > 0) {
-            let rate = metricsData.error_rate ?? metricsData.error_rate_percent;
+            let rate = metricsData.error_rate;
             if (rate !== undefined && rate !== null) {
-              if (typeof rate === 'number' && rate <= 1 && rate > 0) rate = rate * 100;
-              errorRateElem.textContent = `${Number(rate).toFixed(1)}%`;
+              const pct = (rate <= 1.0) ? rate * 100 : rate;
+              errorRateElem.textContent = `${Number(pct).toFixed(1)}%`;
             } else {
-              const calcRate = (errors / total) * 100;
+              const calcRate = (serverErrors / total) * 100;
               errorRateElem.textContent = `${calcRate.toFixed(1)}%`;
             }
           } else {
             errorRateElem.textContent = 'N/A';
           }
 
-          // Response times
+          // Latency statistics
           const avgElem = document.getElementById('valAvgResp');
           const minElem = document.getElementById('valMinResp');
           const maxElem = document.getElementById('valMaxResp');
 
-          const rt = metricsData.response_times || {};
-          const avgVal = rt.avg_ms ?? rt.avg ?? metricsData.average_response_time_ms ?? metricsData.avg_response_time_ms;
-          const minVal = rt.min_ms ?? rt.min ?? metricsData.min_response_time_ms;
-          const maxVal = rt.max_ms ?? rt.max ?? metricsData.max_response_time_ms;
+          const avgVal = metricsData.average_response_time_ms;
+          const minVal = metricsData.min_response_time_ms;
+          const maxVal = metricsData.max_response_time_ms;
 
           avgElem.textContent = (avgVal !== undefined && avgVal !== null) ? `${Number(avgVal).toFixed(1)} ms` : 'No data yet';
           minElem.textContent = (minVal !== undefined && minVal !== null) ? `${Number(minVal).toFixed(1)} ms` : 'No data yet';
           maxElem.textContent = (maxVal !== undefined && maxVal !== null) ? `${Number(maxVal).toFixed(1)} ms` : 'No data yet';
 
-          // Extract response time samples from metrics if available
           if (Array.isArray(metricsData.response_time_samples) && metricsData.response_time_samples.length > 0) {
             samples = metricsData.response_time_samples;
-          }
-
-          // If uptime was in metrics and not health
-          if (uptimeDisplay.textContent === '--' && metricsData.uptime_seconds !== undefined) {
-            uptimeDisplay.textContent = formatUptime(metricsData.uptime_seconds);
           }
         } else {
           hasError = true;
         }
 
-        // Process /api/activity
+        // 3. Process /api/activity
         let recentList = [];
         if (activityRes.status === 'fulfilled' && activityRes.value.ok) {
           const activityData = await activityRes.value.json();
           if (activityData && Array.isArray(activityData.response_time_samples) && activityData.response_time_samples.length > 0) {
             samples = activityData.response_time_samples;
           }
-          if (Array.isArray(activityData)) {
-            recentList = activityData;
-          } else if (activityData && Array.isArray(activityData.recent_requests)) {
+          if (activityData && Array.isArray(activityData.recent_requests)) {
             recentList = activityData.recent_requests;
           }
         }
@@ -1252,24 +1658,259 @@
         updateActivityChart(recentList);
         renderRecentRequestsTable(recentList);
 
-        // Update error banner display
-        if (hasError) {
-          errorBanner.style.display = 'flex';
-        } else {
-          errorBanner.style.display = 'none';
-        }
-
-        // Update refreshed timestamp
+        errorBanner.style.display = hasError ? 'flex' : 'none';
         document.getElementById('lastRefreshedTime').textContent = formatTimestamp(new Date());
 
       } catch (err) {
-        console.error('Error fetching dashboard metrics:', err);
+        console.error('Error fetching dashboard telemetry:', err);
         errorBanner.style.display = 'flex';
-        document.getElementById('errorMessage').textContent = 'Failed to fetch metrics: ' + (err.message || 'Network error');
+        document.getElementById('errorMessage').textContent = 'Failed to fetch telemetry: ' + (err.message || 'Network error');
       } finally {
         isFetching = false;
         refreshBtn.classList.remove('spinning');
         resetCountdown();
+      }
+    }
+
+    // Dispatch helper for demo requests with authorization header
+    async function dispatchDemoRequest(endpoint, method = 'POST', body = null) {
+      const headers = { 'Content-Type': 'application/json' };
+      const token = getDemoToken();
+      if (token) {
+        headers['X-Demo-Token'] = token;
+      }
+
+      const options = { method, headers };
+      if (body) {
+        options.body = JSON.stringify(body);
+      }
+
+      const res = await fetch(endpoint, options);
+      const data = await res.json().catch(() => ({}));
+      return { ok: res.ok, status: res.status, data };
+    }
+
+    // -------------------------------------------------------------------------
+    // Scenario A: Normal Traffic
+    // -------------------------------------------------------------------------
+    async function runNormalTraffic() {
+      const btn = document.getElementById('btnNormalTraffic');
+      const input = document.getElementById('normalCountInput');
+      const count = Math.max(1, Math.min(20, parseInt(input.value) || 5));
+
+      btn.disabled = true;
+      btn.textContent = `Sending ${count}...`;
+
+      try {
+        let successCount = 0;
+        let lastRes = null;
+
+        for (let i = 0; i < count; i++) {
+          lastRes = await dispatchDemoRequest('/api/demo/traffic', 'POST', { count: 1 });
+          if (lastRes.ok) successCount++;
+          else break;
+        }
+
+        if (successCount === count) {
+          showDemoFeedback(`✓ Dispatched ${count} successful HTTP requests. Metrics updated.`, 'success');
+        } else if (lastRes && lastRes.status === 403) {
+          showDemoFeedback(`Demo mode is disabled on server. Set ENABLE_DEMO_MODE=true in environment to enable.`, 'error');
+        } else if (lastRes && lastRes.status === 401) {
+          showDemoFeedback(`Unauthorized: Valid Demo Access Token required. Enter token above.`, 'warning');
+        } else {
+          showDemoFeedback(`Completed ${successCount}/${count} requests. Status: ${lastRes ? lastRes.status : 'Error'}`, 'warning');
+        }
+      } catch (err) {
+        showDemoFeedback(`Error dispatching normal traffic: ${err.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Generate Traffic';
+        await fetchDashboardData();
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // Scenario B: Simulate Server Error (500)
+    // -------------------------------------------------------------------------
+    async function runServerError() {
+      const btn = document.getElementById('btnServerError');
+      const input = document.getElementById('serverErrorCountInput');
+      const count = Math.max(1, Math.min(5, parseInt(input.value) || 1));
+
+      btn.disabled = true;
+      btn.textContent = `Triggering ${count}...`;
+
+      try {
+        let errCount = 0;
+        let lastRes = null;
+
+        for (let i = 0; i < count; i++) {
+          lastRes = await dispatchDemoRequest('/api/demo/server-error', 'POST');
+          if (lastRes.status === 500) errCount++;
+          else break;
+        }
+
+        if (errCount > 0) {
+          showDemoFeedback(`🔥 Simulated ${errCount} HTTP 500 Server Error(s). Server error counter and error rate updated!`, 'warning');
+        } else if (lastRes && lastRes.status === 403) {
+          showDemoFeedback(`Demo mode is disabled on server. Set ENABLE_DEMO_MODE=true to enable.`, 'error');
+        } else if (lastRes && lastRes.status === 401) {
+          showDemoFeedback(`Unauthorized: Valid Demo Access Token required. Enter token above.`, 'warning');
+        } else {
+          showDemoFeedback(`Unexpected response: ${lastRes ? lastRes.status : 'Error'}`, 'error');
+        }
+      } catch (err) {
+        showDemoFeedback(`Error dispatching server fault: ${err.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Trigger 500 Error';
+        await fetchDashboardData();
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // Scenario C: Simulate Slow Response
+    // -------------------------------------------------------------------------
+    async function runSlowResponse() {
+      const btn = document.getElementById('btnSlowResponse');
+      const input = document.getElementById('slowDelayInput');
+      const delay = Math.max(50, Math.min(1500, parseInt(input.value) || 400));
+
+      btn.disabled = true;
+      btn.textContent = `Waiting (${delay}ms)...`;
+
+      try {
+        const start = performance.now();
+        const res = await dispatchDemoRequest('/api/demo/slow-response', 'POST', { delay_ms: delay });
+        const roundTrip = (performance.now() - start).toFixed(1);
+
+        if (res.ok) {
+          showDemoFeedback(`⏳ Slow response simulated successfully. Real measured round-trip: ${roundTrip}ms (injected: ${delay}ms).`, 'success');
+        } else if (res.status === 403) {
+          showDemoFeedback(`Demo mode is disabled on server. Set ENABLE_DEMO_MODE=true to enable.`, 'error');
+        } else if (res.status === 401) {
+          showDemoFeedback(`Unauthorized: Valid Demo Access Token required. Enter token above.`, 'warning');
+        } else {
+          showDemoFeedback(`Error from slow endpoint: ${res.status}`, 'error');
+        }
+      } catch (err) {
+        showDemoFeedback(`Error dispatching slow request: ${err.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Simulate Delay';
+        await fetchDashboardData();
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // Scenario D: Simulate Client Error (404)
+    // -------------------------------------------------------------------------
+    async function runClientError() {
+      const btn = document.getElementById('btnClientError');
+      const input = document.getElementById('clientErrorCountInput');
+      const count = Math.max(1, Math.min(5, parseInt(input.value) || 1));
+
+      btn.disabled = true;
+      btn.textContent = `Triggering ${count}...`;
+
+      try {
+        let cErrCount = 0;
+        let lastRes = null;
+
+        for (let i = 0; i < count; i++) {
+          lastRes = await dispatchDemoRequest('/api/demo/client-error', 'POST');
+          if (lastRes.status === 404) cErrCount++;
+          else break;
+        }
+
+        if (cErrCount > 0) {
+          showDemoFeedback(`🔍 Generated ${cErrCount} HTTP 404 Client Error(s). Incremented Client Errors without affecting 5xx Server Errors.`, 'info');
+        } else if (lastRes && lastRes.status === 403) {
+          showDemoFeedback(`Demo mode is disabled on server. Set ENABLE_DEMO_MODE=true to enable.`, 'error');
+        } else if (lastRes && lastRes.status === 401) {
+          showDemoFeedback(`Unauthorized: Valid Demo Access Token required. Enter token above.`, 'warning');
+        } else {
+          showDemoFeedback(`Unexpected response: ${lastRes ? lastRes.status : 'Error'}`, 'error');
+        }
+      } catch (err) {
+        showDemoFeedback(`Error dispatching client fault: ${err.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Trigger 404 Error';
+        await fetchDashboardData();
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // Scenario E: Recovery Test
+    // -------------------------------------------------------------------------
+    async function runRecovery() {
+      const btn = document.getElementById('btnRecovery');
+      const input = document.getElementById('recoveryCountInput');
+      const count = Math.max(1, Math.min(20, parseInt(input.value) || 5));
+
+      btn.disabled = true;
+      btn.textContent = `Recovering (${count})...`;
+
+      try {
+        let okCount = 0;
+        for (let i = 0; i < count; i++) {
+          const res = await dispatchDemoRequest('/api/demo/traffic', 'POST', { count: 1 });
+          if (res.ok) okCount++;
+        }
+
+        const res = await dispatchDemoRequest('/api/demo/recovery', 'POST', { count });
+        if (res.ok) {
+          showDemoFeedback(`🔄 Recovery batch executed (${okCount + 1} successful queries). Error rate reduced. Note: historical errors remain in cumulative counters until reset.`, 'success');
+        } else if (res.status === 403) {
+          showDemoFeedback(`Demo mode is disabled on server. Set ENABLE_DEMO_MODE=true to enable.`, 'error');
+        } else if (res.status === 401) {
+          showDemoFeedback(`Unauthorized: Valid Demo Access Token required. Enter token above.`, 'warning');
+        } else {
+          showDemoFeedback(`Recovery completed with status ${res.status}.`, 'info');
+        }
+      } catch (err) {
+        showDemoFeedback(`Error during recovery test: ${err.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Run Recovery';
+        await fetchDashboardData();
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // Scenario F: Reset Demo Metrics
+    // -------------------------------------------------------------------------
+    async function runResetMetrics() {
+      const confirmed = window.confirm(
+        'Are you sure you want to reset all in-memory telemetry counters and buffers?\n\n' +
+        'This will reset total requests, error counts, latency samples, and recent logs back to zero. ' +
+        'This does not affect application configuration or files.'
+      );
+
+      if (!confirmed) return;
+
+      const btn = document.getElementById('btnResetMetrics');
+      btn.disabled = true;
+      btn.textContent = 'Resetting...';
+
+      try {
+        const res = await dispatchDemoRequest('/api/demo/reset', 'POST');
+        if (res.ok) {
+          showDemoFeedback('🧹 All in-memory telemetry counters and sample deques have been reset to zero.', 'success');
+        } else if (res.status === 403) {
+          showDemoFeedback(`Demo mode is disabled on server. Set ENABLE_DEMO_MODE=true to enable.`, 'error');
+        } else if (res.status === 401) {
+          showDemoFeedback(`Unauthorized: Valid Demo Access Token required. Enter token above.`, 'warning');
+        } else {
+          showDemoFeedback(`Reset failed with status ${res.status}.`, 'error');
+        }
+      } catch (err) {
+        showDemoFeedback(`Error resetting telemetry: ${err.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Reset In-Memory Metrics';
+        await fetchDashboardData();
       }
     }
 
@@ -1293,7 +1934,7 @@
 
     function startAutoRefreshLoop() {
       if (countdownIntervalId) clearInterval(countdownIntervalId);
-      
+
       countdownIntervalId = setInterval(() => {
         countdownRemaining--;
         if (countdownRemaining <= 0) {
@@ -1304,8 +1945,16 @@
       }, 1000);
     }
 
-    // Initialize on page load
+    // Initialize Dashboard
     document.addEventListener('DOMContentLoaded', () => {
+      // Pre-fill demo token from sessionStorage if present
+      const token = getDemoToken();
+      if (token) {
+        const input = document.getElementById('demoTokenInput');
+        if (input) input.value = token;
+      }
+
+      checkDemoStatus();
       fetchDashboardData();
       startAutoRefreshLoop();
     });

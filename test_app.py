@@ -10,6 +10,14 @@ def clean_metrics_state():
     Ensure every test runs with an isolated, fresh in-memory metrics state.
     """
     reset_metrics()
+    # Reset any demo/threshold environment variables that might leak across tests
+    os.environ.pop("ENABLE_DEMO_MODE", None)
+    os.environ.pop("ENABLE_ERROR_SIMULATION", None)
+    os.environ.pop("DEMO_ACCESS_TOKEN", None)
+    os.environ.pop("HEALTH_DEGRADED_ERROR_RATE", None)
+    os.environ.pop("HEALTH_UNHEALTHY_ERROR_RATE", None)
+    os.environ.pop("HEALTH_DEGRADED_LATENCY_MS", None)
+    os.environ.pop("HEALTH_UNHEALTHY_LATENCY_MS", None)
     yield
     reset_metrics()
 
@@ -41,6 +49,7 @@ def test_health_endpoint_json_format(client):
     assert "timestamp" in data
     assert "uptime_seconds" in data
     assert data.get("version") == "1.0.0"
+    assert "diagnostics" in data
     assert isinstance(data["uptime_seconds"], (int, float))
 
 
@@ -49,6 +58,40 @@ def test_health_updates_last_health_check(client):
     metrics_res = client.get("/metrics")
     data = json.loads(metrics_res.data)
     assert data["last_health_check"] is not None
+
+
+def test_health_status_degraded_on_error_rate(client):
+    os.environ["ENABLE_DEMO_MODE"] = "true"
+    os.environ["HEALTH_DEGRADED_ERROR_RATE"] = "0.10"
+    os.environ["HEALTH_UNHEALTHY_ERROR_RATE"] = "0.50"
+
+    # Generate 8 successful requests and 2 server errors -> error rate = 2/10 = 20% (>= 10% degraded threshold)
+    for _ in range(8):
+        client.get("/")
+    for _ in range(2):
+        client.get("/api/demo/server-error")
+
+    health_res = client.get("/health")
+    assert health_res.status_code == 200
+    data = json.loads(health_res.data)
+    assert data["status"] == "degraded"
+    assert data["diagnostics"]["observed_server_error_rate"] == 0.2
+
+
+def test_health_status_unhealthy_on_critical_error_rate(client):
+    os.environ["ENABLE_DEMO_MODE"] = "true"
+    os.environ["HEALTH_UNHEALTHY_ERROR_RATE"] = "0.50"
+
+    # Generate 1 successful request and 3 server errors -> error rate = 3/4 = 75% (>= 50% critical threshold)
+    client.get("/")
+    for _ in range(3):
+        client.get("/api/demo/server-error")
+
+    health_res = client.get("/health")
+    assert health_res.status_code == 503
+    data = json.loads(health_res.data)
+    assert data["status"] == "unhealthy"
+    assert data["diagnostics"]["observed_server_error_rate"] == 0.75
 
 
 # -----------------------------------------------------------------------------
@@ -67,6 +110,8 @@ def test_metrics_endpoint_json_format(client):
     expected_keys = [
         "total_requests",
         "successful_requests",
+        "client_error_count",
+        "server_error_count",
         "error_count",
         "average_response_time_ms",
         "min_response_time_ms",
@@ -75,6 +120,7 @@ def test_metrics_endpoint_json_format(client):
         "error_rate",
         "uptime_seconds",
         "last_health_check",
+        "health_status",
         "in_memory_notice"
     ]
     for key in expected_keys:
@@ -86,6 +132,8 @@ def test_metrics_initial_empty_state(client):
     data = json.loads(response.data)
     assert data["total_requests"] == 0
     assert data["successful_requests"] == 0
+    assert data["client_error_count"] == 0
+    assert data["server_error_count"] == 0
     assert data["error_count"] == 0
     assert data["average_response_time_ms"] is None
     assert data["min_response_time_ms"] is None
@@ -128,7 +176,6 @@ def test_evaluation_page_renders(client):
 
 
 def test_evaluation_page_content(client):
-    # Tests that /evaluation specifically renders actual evaluation content
     response = client.get("/evaluation")
     assert response.status_code == 200
     html = response.data.decode("utf-8")
@@ -168,7 +215,6 @@ def test_activity_endpoint_json_format(client):
 # -----------------------------------------------------------------------------
 
 def test_metrics_increment_on_monitored_traffic(client):
-    # Visiting dashboard (monitored route)
     client.get("/")
     metrics_res = client.get("/metrics")
     data = json.loads(metrics_res.data)
@@ -180,20 +226,18 @@ def test_metrics_increment_on_monitored_traffic(client):
 
 
 def test_excluded_paths_do_not_inflate_metrics(client):
-    # Calling internal monitoring endpoints should NOT increase total_requests
     client.get("/health")
     client.get("/health")
     client.get("/api/activity")
+    client.get("/api/demo/status")
 
     metrics_res = client.get("/metrics")
     data = json.loads(metrics_res.data)
-    # total_requests should still be 0 because internal monitoring paths are excluded
     assert data["total_requests"] == 0
     assert data["successful_requests"] == 0
 
 
 def test_response_time_statistics_calculation(client):
-    # Issue multiple requests to generate response time samples
     client.get("/")
     client.get("/evaluation")
 
@@ -210,6 +254,7 @@ def test_response_time_statistics_calculation(client):
 
 def test_simulate_error_disabled_by_default(client):
     os.environ.pop("ENABLE_ERROR_SIMULATION", None)
+    os.environ.pop("ENABLE_DEMO_MODE", None)
     response = client.get("/simulate-error")
     assert response.status_code == 403
     data = json.loads(response.data)
@@ -219,23 +264,19 @@ def test_simulate_error_disabled_by_default(client):
 
 def test_simulate_error_when_enabled(client):
     os.environ["ENABLE_ERROR_SIMULATION"] = "true"
-    try:
-        response = client.get("/simulate-error")
-        assert response.status_code == 500
-        data = json.loads(response.data)
-        assert data["status"] == 500
-        assert data["error"] == "Internal server error"
-        # Verify no traceback leaks to user
-        assert "Traceback" not in response.data.decode("utf-8")
+    response = client.get("/simulate-error")
+    assert response.status_code == 500
+    data = json.loads(response.data)
+    assert data["status"] == 500
+    assert data["error"] == "Internal server error"
+    assert "Traceback" not in response.data.decode("utf-8")
 
-        # Verify error counted in metrics
-        metrics_res = client.get("/metrics")
-        m_data = json.loads(metrics_res.data)
-        assert m_data["error_count"] == 1
-        assert m_data["total_requests"] == 1
-        assert m_data["error_rate"] == 1.0
-    finally:
-        os.environ.pop("ENABLE_ERROR_SIMULATION", None)
+    metrics_res = client.get("/metrics")
+    m_data = json.loads(metrics_res.data)
+    assert m_data["error_count"] == 1
+    assert m_data["server_error_count"] == 1
+    assert m_data["total_requests"] == 1
+    assert m_data["error_rate"] == 1.0
 
 
 def test_404_handler_structure(client):
@@ -244,18 +285,18 @@ def test_404_handler_structure(client):
     data = json.loads(response.data)
     assert data["status"] == 404
     assert data["error"] == "Not found"
-    # Ensure no stack trace leaks
     assert "Traceback" not in response.data.decode("utf-8")
 
 
 def test_404_not_counted_as_server_error(client):
-    # 404 is a client error; it should increment total_requests but NOT error_count (which tracks 5xx)
     client.get("/nonexistent-page")
     metrics_res = client.get("/metrics")
     data = json.loads(metrics_res.data)
     assert data["total_requests"] == 1
     assert data["successful_requests"] == 0
-    assert data["error_count"] == 0  # 4xx is not a 5xx server error
+    assert data["client_error_count"] == 1
+    assert data["server_error_count"] == 0
+    assert data["error_count"] == 0
 
 
 # -----------------------------------------------------------------------------
@@ -271,3 +312,181 @@ def test_security_headers_present(client):
     assert "Content-Security-Policy" in response.headers
     csp = response.headers.get("Content-Security-Policy")
     assert "default-src 'self'" in csp
+
+
+# -----------------------------------------------------------------------------
+# 9. Interactive Demo Scenarios & Security Controls Tests
+# -----------------------------------------------------------------------------
+
+def test_demo_status_endpoint(client):
+    res = client.get("/api/demo/status")
+    assert res.status_code == 200
+    data = json.loads(res.data)
+    assert "demo_mode_enabled" in data
+    assert "token_required" in data
+
+
+def test_demo_controls_disabled_by_default(client):
+    # Verify all demo endpoints return 403 when demo mode is not enabled
+    os.environ.pop("ENABLE_DEMO_MODE", None)
+    os.environ.pop("ENABLE_ERROR_SIMULATION", None)
+
+    for route, method in [
+        ("/api/demo/traffic", "POST"),
+        ("/api/demo/server-error", "POST"),
+        ("/api/demo/slow-response", "POST"),
+        ("/api/demo/client-error", "POST"),
+        ("/api/demo/recovery", "POST"),
+        ("/api/demo/reset", "POST"),
+    ]:
+        if method == "POST":
+            res = client.post(route)
+        else:
+            res = client.get(route)
+        assert res.status_code == 403, f"{route} did not return 403 when disabled"
+
+
+def test_demo_controls_token_authorization(client):
+    os.environ["ENABLE_DEMO_MODE"] = "true"
+    os.environ["DEMO_ACCESS_TOKEN"] = "test-secret-key-123"
+
+    # 1. Missing token -> 401
+    res1 = client.post("/api/demo/traffic", json={"count": 1})
+    assert res1.status_code == 401
+
+    # 2. Invalid token -> 401
+    res2 = client.post("/api/demo/traffic", json={"count": 1}, headers={"X-Demo-Token": "wrong-key"})
+    assert res2.status_code == 401
+
+    # 3. Valid token via header -> 200
+    res3 = client.post("/api/demo/traffic", json={"count": 1}, headers={"X-Demo-Token": "test-secret-key-123"})
+    assert res3.status_code == 200
+
+
+def test_demo_input_bounds_validation(client):
+    os.environ["ENABLE_DEMO_MODE"] = "true"
+
+    # Out of bounds request count (min 1, max 25)
+    bad_count_res = client.post("/api/demo/traffic", json={"count": 999})
+    assert bad_count_res.status_code == 400
+
+    zero_count_res = client.post("/api/demo/traffic", json={"count": 0})
+    assert zero_count_res.status_code == 400
+
+    # Non-integer count
+    invalid_count_res = client.post("/api/demo/traffic", json={"count": "abc"})
+    assert invalid_count_res.status_code == 400
+
+    # Out of bounds delay (min 50ms, max 2000ms)
+    bad_delay_res = client.post("/api/demo/slow-response", json={"delay_ms": 10000})
+    assert bad_delay_res.status_code == 400
+
+    low_delay_res = client.post("/api/demo/slow-response", json={"delay_ms": 10})
+    assert low_delay_res.status_code == 400
+
+
+def test_demo_normal_traffic_scenario(client):
+    os.environ["ENABLE_DEMO_MODE"] = "true"
+
+    res = client.post("/api/demo/traffic", json={"count": 3})
+    assert res.status_code == 200
+    data = json.loads(res.data)
+    assert data["scenario"] == "normal_traffic"
+
+    # Verify metrics updated
+    m_res = client.get("/metrics")
+    m_data = json.loads(m_res.data)
+    assert m_data["total_requests"] == 1
+    assert m_data["successful_requests"] == 1
+    assert m_data["error_count"] == 0
+
+
+def test_demo_server_error_scenario(client):
+    os.environ["ENABLE_DEMO_MODE"] = "true"
+
+    res = client.post("/api/demo/server-error")
+    assert res.status_code == 500
+    err_data = json.loads(res.data)
+    assert err_data["status"] == 500
+
+    # Verify server error counted
+    m_res = client.get("/metrics")
+    m_data = json.loads(m_res.data)
+    assert m_data["server_error_count"] == 1
+    assert m_data["error_count"] == 1
+    assert m_data["error_rate"] == 1.0
+
+
+def test_demo_client_error_scenario(client):
+    os.environ["ENABLE_DEMO_MODE"] = "true"
+
+    res = client.post("/api/demo/client-error")
+    assert res.status_code == 404
+    data = json.loads(res.data)
+    assert data["status"] == 404
+
+    # Verify client error counted separately from server error
+    m_res = client.get("/metrics")
+    m_data = json.loads(m_res.data)
+    assert m_data["total_requests"] == 1
+    assert m_data["client_error_count"] == 1
+    assert m_data["server_error_count"] == 0
+    assert m_data["error_count"] == 0
+
+
+def test_demo_slow_response_scenario(client):
+    os.environ["ENABLE_DEMO_MODE"] = "true"
+
+    res = client.post("/api/demo/slow-response", json={"delay_ms": 100})
+    assert res.status_code == 200
+    data = json.loads(res.data)
+    assert data["delay_ms"] == 100
+
+    # Verify measured latency was at least 90ms
+    m_res = client.get("/metrics")
+    m_data = json.loads(m_res.data)
+    assert m_data["total_requests"] == 1
+    assert m_data["average_response_time_ms"] >= 90.0
+
+
+def test_demo_recovery_scenario(client):
+    os.environ["ENABLE_DEMO_MODE"] = "true"
+
+    # Trigger 1 server error -> error rate 100%
+    client.post("/api/demo/server-error")
+    m1 = json.loads(client.get("/metrics").data)
+    assert m1["error_rate"] == 1.0
+
+    # Execute recovery batch
+    rec_res = client.post("/api/demo/recovery", json={"count": 5})
+    assert rec_res.status_code == 200
+
+    # Error rate drops to 1/2 = 50%
+    m2 = json.loads(client.get("/metrics").data)
+    assert m2["total_requests"] == 2
+    assert m2["error_rate"] == 0.5
+
+
+def test_demo_reset_scenario(client):
+    os.environ["ENABLE_DEMO_MODE"] = "true"
+
+    # Generate some traffic and errors
+    client.get("/")
+    client.post("/api/demo/server-error")
+    m1 = json.loads(client.get("/metrics").data)
+    assert m1["total_requests"] == 2
+    assert m1["server_error_count"] == 1
+
+    # Reset metrics
+    reset_res = client.post("/api/demo/reset")
+    assert reset_res.status_code == 200
+
+    # Verify everything returned to clean 0 state
+    m2 = json.loads(client.get("/metrics").data)
+    assert m2["total_requests"] == 0
+    assert m2["successful_requests"] == 0
+    assert m2["client_error_count"] == 0
+    assert m2["server_error_count"] == 0
+    assert m2["error_count"] == 0
+    assert m2["average_response_time_ms"] is None
+    assert m2["response_time_samples"] == []

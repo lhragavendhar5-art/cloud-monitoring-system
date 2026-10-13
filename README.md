@@ -25,13 +25,14 @@ Built with Flask and deployed using Gunicorn on Render's cloud infrastructure, t
 
 ## 2. Features
 
-- **Interactive Monitoring Dashboard**: Web-based interface displaying real-time metrics, system uptime, request counters, error counts, and recent traffic logs.
-- **Health Check Endpoint (`/health`)**: Machine-readable JSON endpoint designed for cloud orchestrator liveness and readiness probes.
-- **Operational Metrics Engine (`/metrics`)**: Low-latency in-memory telemetry collecting total requests, success/error rates, and min/average/max response times.
+- **Interactive Monitoring Dashboard**: Web-based interface displaying real-time metrics, system uptime, request counters, error counts, client error counts, and recent traffic logs.
+- **Interactive Demo Control Panel**: In-dashboard control center allowing live demonstration of 6 operational scenarios (Normal Traffic, Server Errors, Slow Responses, Client Errors, Service Recovery, and Telemetry Reset).
+- **Dynamic Health Status (`/health`)**: Machine-readable JSON probe evaluating application status against configurable error-rate and latency thresholds (`healthy`, `degraded`, `unhealthy`). Returns HTTP 200 or HTTP 503.
+- **Operational Metrics Engine (`/metrics`)**: Low-latency in-memory telemetry collecting total requests, success/error rates, client errors (4xx), server errors (5xx), and min/average/max response times.
 - **Recent Activity Telemetry (`/api/activity`)**: Rolling window of recent HTTP requests and response latency distributions.
-- **Configurable Fault Injection (`/simulate-error`)**: Secure, guarded diagnostic endpoint to validate alerting and failure handling (disabled by default).
+- **Protected Fault Injection & Demo API (`/api/demo/*`, `/simulate-error`)**: Secure, guarded diagnostic endpoints protected by environment flags and optional access tokens.
 - **HTTP Security Hardening**: Defense-in-depth HTTP response headers (`X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`) and sanitized JSON error handlers.
-- **Automated CI/CD Pipeline**: GitHub Actions workflow running automated unit and integration tests with `pytest` prior to triggering zero-downtime deployment.
+- **Automated CI/CD Pipeline**: GitHub Actions workflow running 32 automated unit and integration tests with `pytest` prior to triggering zero-downtime deployment.
 - **Production WSGI Integration**: Full compatibility with Gunicorn for concurrent request handling in cloud environments.
 
 ---
@@ -128,36 +129,48 @@ pytest -v
 ```
 
 ### Expected Output Format
-
+ 
 ```text
 ============================= test session starts =============================
 platform win32 -- Python 3.12+ / 3.14+, pytest-8.3.5, pluggy-1.6.0
 cachedir: .pytest_cache
 rootdir: c:\Users\Ragav\OneDrive\Documents\CC
-collected 20 items
+collected 32 items
 
-test_app.py::test_health_endpoint_status PASSED                          [  5%]
-test_app.py::test_health_endpoint_json_format PASSED                     [ 10%]
-test_app.py::test_health_updates_last_health_check PASSED                [ 15%]
-test_app.py::test_metrics_endpoint_status PASSED                         [ 20%]
-test_app.py::test_metrics_endpoint_json_format PASSED                    [ 25%]
-test_app.py::test_metrics_initial_empty_state PASSED                     [ 30%]
-test_app.py::test_dashboard_renders PASSED                               [ 35%]
-test_app.py::test_dashboard_contains_key_elements PASSED                 [ 40%]
-test_app.py::test_evaluation_page_renders PASSED                         [ 45%]
-test_app.py::test_evaluation_page_content PASSED                         [ 50%]
-test_app.py::test_activity_endpoint_status PASSED                        [ 55%]
-test_app.py::test_activity_endpoint_json_format PASSED                   [ 60%]
-test_app.py::test_metrics_increment_on_monitored_traffic PASSED          [ 65%]
-test_app.py::test_excluded_paths_do_not_inflate_metrics PASSED           [ 70%]
-test_app.py::test_response_time_statistics_calculation PASSED            [ 75%]
-test_app.py::test_simulate_error_disabled_by_default PASSED              [ 80%]
-test_app.py::test_simulate_error_when_enabled PASSED                     [ 85%]
-test_app.py::test_404_handler_structure PASSED                           [ 90%]
-test_app.py::test_404_not_counted_as_server_error PASSED                 [ 95%]
-test_app.py::test_security_headers_present PASSED                        [100%]
+test_app.py::test_health_endpoint_status PASSED                          [  3%]
+test_app.py::test_health_endpoint_json_format PASSED                     [  6%]
+test_app.py::test_health_updates_last_health_check PASSED                [  9%]
+test_app.py::test_health_status_degraded_on_error_rate PASSED            [ 12%]
+test_app.py::test_health_status_unhealthy_on_critical_error_rate PASSED  [ 15%]
+test_app.py::test_metrics_endpoint_status PASSED                         [ 18%]
+test_app.py::test_metrics_endpoint_json_format PASSED                    [ 21%]
+test_app.py::test_metrics_initial_empty_state PASSED                     [ 25%]
+test_app.py::test_dashboard_renders PASSED                               [ 28%]
+test_app.py::test_dashboard_contains_key_elements PASSED                 [ 31%]
+test_app.py::test_evaluation_page_renders PASSED                         [ 34%]
+test_app.py::test_evaluation_page_content PASSED                         [ 37%]
+test_app.py::test_activity_endpoint_status PASSED                        [ 40%]
+test_app.py::test_activity_endpoint_json_format PASSED                   [ 43%]
+test_app.py::test_metrics_increment_on_monitored_traffic PASSED          [ 46%]
+test_app.py::test_excluded_paths_do_not_inflate_metrics PASSED           [ 50%]
+test_app.py::test_response_time_statistics_calculation PASSED            [ 53%]
+test_app.py::test_simulate_error_disabled_by_default PASSED              [ 56%]
+test_app.py::test_simulate_error_when_enabled PASSED                     [ 59%]
+test_app.py::test_404_handler_structure PASSED                           [ 62%]
+test_app.py::test_404_not_counted_as_server_error PASSED                 [ 65%]
+test_app.py::test_security_headers_present PASSED                        [ 68%]
+test_app.py::test_demo_status_endpoint PASSED                            [ 71%]
+test_app.py::test_demo_controls_disabled_by_default PASSED               [ 75%]
+test_app.py::test_demo_controls_token_authorization PASSED               [ 78%]
+test_app.py::test_demo_input_bounds_validation PASSED                    [ 81%]
+test_app.py::test_demo_normal_traffic_scenario PASSED                    [ 84%]
+test_app.py::test_demo_server_error_scenario PASSED                      [ 87%]
+test_app.py::test_demo_client_error_scenario PASSED                      [ 90%]
+test_app.py::test_demo_slow_response_scenario PASSED                     [ 93%]
+test_app.py::test_demo_recovery_scenario PASSED                          [ 96%]
+test_app.py::test_demo_reset_scenario PASSED                             [100%]
 
-============================= 20 passed in 0.20s ==============================
+============================= 32 passed in 0.30s ==============================
 ```
 
 ---
@@ -244,49 +257,145 @@ flowchart TD
 | Route | HTTP Method | Description | Response Type | Status Code |
 | :--- | :--- | :--- | :--- | :--- |
 | `/` | `GET` | Web-based real-time telemetry and health monitoring dashboard | `text/html` | `200 OK` |
-| `/health` | `GET` | Health status probe reporting uptime, version, and status | `application/json` | `200 OK` |
-| `/metrics` | `GET` | Operational telemetry (counters, error rate, min/avg/max latency) | `application/json` | `200 OK` |
+| `/health` | `GET` | Dynamic health status probe (`healthy`, `degraded`, `unhealthy`) based on real telemetry | `application/json` | `200 OK` / `503 Service Unavailable` |
+| `/metrics` | `GET` | Operational telemetry (counters, 4xx/5xx errors, error rate, min/avg/max latency) | `application/json` | `200 OK` |
 | `/api/activity` | `GET` | Recent request activity sliding window and response time samples | `application/json` | `200 OK` |
+| `/api/demo/status` | `GET` | Status of demo control panel and access token protection | `application/json` | `200 OK` |
+| `/api/demo/traffic` | `POST` | Generate bounded normal traffic requests (1–25 requests) | `application/json` | `200 OK` / `403 Forbidden` |
+| `/api/demo/server-error` | `POST` | Trigger controlled HTTP 500 server fault injection | `application/json` | `500 Error` / `403 Forbidden` |
+| `/api/demo/slow-response` | `POST` | Simulate controlled latency with bounded delay (50–2000 ms) | `application/json` | `200 OK` / `403 Forbidden` |
+| `/api/demo/client-error` | `POST` | Trigger controlled HTTP 404 client error | `application/json` | `404 Not Found` / `403 Forbidden` |
+| `/api/demo/recovery` | `POST` | Recovery verification test generating successful requests | `application/json` | `200 OK` / `403 Forbidden` |
+| `/api/demo/reset` | `POST` | Reset in-memory telemetry counters and buffers | `application/json` | `200 OK` / `403 Forbidden` |
 | `/simulate-error` | `GET` | Diagnostic error route (enabled via `ENABLE_ERROR_SIMULATION`) | `application/json` | `403 Forbidden` / `500 Error` |
 | `/evaluation` | `GET` | System architecture, evaluation, and operational report page | `text/html` | `200 OK` |
 | `/*` (Not found) | `ALL` | Global fallback handler for undefined paths | `application/json` | `404 Not Found` |
 
 ---
 
-## 10. Monitoring
+## 10. Monitoring & Dynamic Health Evaluation
 
 ### Dashboard Operation
 The dashboard at `/` provides an administrative overview of service health:
-- It uses lightweight asynchronous JavaScript to poll `/metrics` and `/api/activity` without full page refreshes.
-- It presents visual indicators for current uptime, total processed requests, error percentages, and latency distribution.
+- It uses lightweight asynchronous JavaScript to poll `/metrics` and `/api/activity` every 10–15 seconds without full page refreshes.
+- It presents visual indicators for current uptime, total processed requests, error percentages, client errors, and latency distribution.
+- Live telemetry is synchronized directly from real backend measurements; no mock values or fabricated counters are used.
 
 ### Metrics Collected
-- **Total Requests (`total_requests`)**: Cumulative counter of incoming HTTP requests handled by the instance (excluding monitoring endpoints `/health`, `/metrics`, and `/api/*`).
+- **Total Requests (`total_requests`)**: Cumulative counter of incoming HTTP requests handled by the instance (excluding internal monitoring probes `/health`, `/metrics`, and `/api/*`).
 - **Successful Requests (`successful_requests`)**: Counter of requests yielding 2xx or 3xx HTTP status codes.
-- **Server Error Count (`error_count`)**: Counter of requests resulting in 5xx internal server errors. (Note: 4xx client errors like 404/403 are tracked in `total_requests` but are not counted as server errors, ensuring precise DevOps error rate calculation).
+- **Client Error Count (`client_error_count`)**: Counter of requests resulting in 4xx client errors (e.g., 404 Not Found, 403 Forbidden).
+- **Server Error Count (`server_error_count` / `error_count`)**: Counter of requests resulting in 5xx internal server errors.
+- **Error Rate (`error_rate`)**: Ratio of 5xx server errors to total monitored requests (`server_error_count / total_requests`). Displayed as `0.00%` when no requests exist. 4xx errors are excluded from server error rate.
 - **Latency Statistics**:
   - `average_response_time_ms`: Arithmetic mean of response times across tracked requests.
   - `min_response_time_ms`: Lowest observed response time in milliseconds.
   - `max_response_time_ms`: Highest observed response time in milliseconds.
 - **System Uptime (`uptime_seconds`)**: Elapsed seconds since the application process started.
+- **Health Status (`health_status`)**: Current application health classification (`healthy`, `degraded`, or `unhealthy`).
 - **Recent Activity Window**: Rolling buffer containing metadata (timestamp, HTTP method, path, status code, latency) of the last processed requests.
+
+### Dynamic Health Thresholds
+The `/health` probe dynamically evaluates application health against configurable operational thresholds:
+- **`healthy`**: Error rate $\le 10\%$ and average response time $\le 500\text{ ms}$. Returns HTTP 200.
+- **`degraded`**: Error rate $> 10\%$ or average response time $> 500\text{ ms}$. Returns HTTP 200 with diagnostic warning.
+- **`unhealthy`**: Error rate $> 30\%$ or average response time $> 1200\text{ ms}$. Returns HTTP 503 Service Unavailable.
+
+Thresholds are customizable via environment variables:
+- `HEALTH_DEGRADED_ERROR_RATE` (default `0.10`)
+- `HEALTH_UNHEALTHY_ERROR_RATE` (default `0.30`)
+- `HEALTH_DEGRADED_LATENCY_MS` (default `500.0`)
+- `HEALTH_UNHEALTHY_LATENCY_MS` (default `1200.0`)
 
 ---
 
-## 11. Security
+## 11. Interactive Demo Scenarios
+
+The dashboard features an interactive **Demo Scenarios** control center to demonstrate real cloud operational events live:
+
+1. **Normal Traffic**:
+   - Sends a user-configured batch of real HTTP requests (1 to 25) to `/api/demo/traffic`.
+   - Each request is processed through the WSGI pipeline, measured, and appended to the activity stream and latency charts.
+2. **Simulate Server Errors (500)**:
+   - Triggers an authentic HTTP 500 internal server error via `/api/demo/server-error`.
+   - Increments `server_error_count`, recalculates `error_rate`, triggers dynamic health status evaluation, and flashes a warning toast.
+3. **Simulate Slow Responses (Latency Injection)**:
+   - Injects a controlled server delay (50 ms to 2000 ms) via `/api/demo/slow-response`.
+   - The response timer measures genuine elapsed wall-clock execution time and updates average and maximum latency metrics.
+4. **Simulate Client Errors (404)**:
+   - Generates a controlled HTTP 404 response via `/api/demo/client-error`.
+   - Increments `client_error_count` without affecting the 5xx server error rate or triggering unnecessary server failure alerts.
+5. **Recovery Test**:
+   - Generates 5 consecutive successful requests to verify service restoration.
+   - Updates health status while retaining cumulative historical metrics, demonstrating standard cloud telemetry behavior.
+6. **Reset Demo Metrics**:
+   - Resets all in-memory counters (`total_requests`, `server_error_count`, `client_error_count`, latency records) to zero upon user confirmation.
+   - Clears activity tables and resets charts to clean baseline states.
+
+### Demo Security & Configuration
+- **Disabled by Default**: Demo endpoints return `403 Forbidden` unless `ENABLE_DEMO_MODE=true` (or `ENABLE_ERROR_SIMULATION=true`).
+- **Optional Access Token**: Set `DEMO_ACCESS_TOKEN=<secret>` to enforce token authorization. The dashboard includes a token input field that transmits the token via the `X-Demo-Token` header.
+- **Server-Side Input Validation**: Traffic counts are bounded to 1–25 requests; latency delays are bounded to 50–2000 ms to prevent denial-of-service conditions.
+
+---
+
+## 12. Practical Examination Demonstration Guide
+
+Follow this sequence to demonstrate each cloud monitoring capability during evaluation:
+
+### Step 1: Baseline Verification
+1. Open the live dashboard at [https://cloud-monitoring-system.onrender.com](https://cloud-monitoring-system.onrender.com).
+2. Point out the **Health Status** badge (`Healthy`), **Process Uptime**, and clean initial counters.
+3. Open `/health` in another tab to show the JSON health probe with `status: "healthy"` and `diagnostics`.
+
+### Step 2: Normal Traffic Demonstration
+1. In the **Demo Scenarios** panel, set **Request Count** to `5` and click **Generate Normal Traffic**.
+2. Observe the counters increment: **Total Requests** increases by 5, **Successful Requests** increases by 5, and the **Response Time Chart** updates with actual millisecond latency values.
+3. Point out the new entries in the **Recent Request Activity** table.
+
+### Step 3: Latency & Slow Response Demonstration
+1. Set the **Delay (ms)** slider to `800` ms and click **Inject Latency**.
+2. Notice the brief delay while the request completes.
+3. Observe **Average Response Time** and **Maximum Response Time** jump to reflect the measured 800+ ms latency.
+4. If average latency exceeds the threshold, observe the **Health Status** badge update to `Degraded`.
+
+### Step 4: Server Error & Health Degradation Demonstration
+1. Click **Inject Server Error (500)**.
+2. Observe the **Server Errors (5xx)** card increment and **Error Rate** recalculate.
+3. Observe the system status transition based on error percentage: if error rate exceeds 10%, the health badge updates to `Degraded`; above 30%, it transitions to `Unhealthy`.
+4. Refresh `/health` to show the HTTP status code (HTTP 503 when unhealthy) and updated diagnostics JSON.
+
+### Step 5: Client Error Separation (4xx vs 5xx)
+1. Click **Trigger Client Error (404)**.
+2. Observe that **Client Errors (4xx)** increments, but **Server Errors (5xx)** remains unchanged.
+3. Explain that client errors represent malformed or missing client requests and do not count toward internal service failure rates.
+
+### Step 6: Recovery Test Demonstration
+1. Click **Run Recovery Test**.
+2. The system executes a batch of 5 successful requests.
+3. As successful requests dilute the error percentage below the degraded threshold, observe the **Health Status** return to `Healthy`.
+4. Point out that historical error counts are preserved in cumulative metrics until explicitly reset.
+
+### Step 7: Telemetry Reset
+1. Click **Reset Demo Metrics** and confirm the prompt.
+2. All counters return to zero, charts clear to the initial empty state, and uptime continues incrementing uninterrupted.
+
+---
+
+## 13. Security
 
 The application incorporates standard web application security practices:
 
 - **Security Response Headers**: Every response generated by the application includes:
   - `X-Content-Type-Options: nosniff`: Instructs browsers not to override the declared MIME type, mitigating MIME-confusion attacks.
   - `X-Frame-Options: SAMEORIGIN`: Prevents the site from being embedded in unauthorized frames or iframes, mitigating clickjacking.
-- **Restricted Diagnostic Controls**: The `/simulate-error` endpoint is locked down by default. It requires the environment variable `ENABLE_ERROR_SIMULATION` to be set to a truthy value; otherwise, it returns `403 Forbidden`.
+- **Restricted Diagnostic Controls**: Demo endpoints and `/simulate-error` are locked down by default. They require `ENABLE_DEMO_MODE=true` or `ENABLE_ERROR_SIMULATION=true`, and support optional access tokens via `DEMO_ACCESS_TOKEN`.
 - **Sanitized Error Responses**: Custom error handlers intercept 404 and 500 conditions, returning structured JSON payloads instead of exposing Python stack traces or server internals.
 - **Credential & Secret Protection**: Sensitive deployment webhooks are kept out of the source tree and stored in GitHub Encrypted Secrets (`RENDER_DEPLOY_HOOK`).
 
 ---
 
-## 12. Cost Analysis
+## 14. Cost Analysis
 
 The entire application and CI/CD lifecycle operates within provider Free Tiers:
 
@@ -300,7 +409,7 @@ The entire application and CI/CD lifecycle operates within provider Free Tiers:
 
 ---
 
-## 13. Scalability
+## 15. Scalability
 
 - **Stateless Application Tier**: The Flask web application retains no persistent state across HTTP requests, allowing it to scale horizontally behind cloud load balancers.
 - **Concurrency Model**: Running on Gunicorn allows multi-process worker configurations (e.g., `gunicorn -w 4 app:app`) to maximize CPU utilization and handle concurrent client requests efficiently.
@@ -308,7 +417,7 @@ The entire application and CI/CD lifecycle operates within provider Free Tiers:
 
 ---
 
-## 14. Important Notes & Production Considerations
+## 16. Important Notes & Production Considerations
  
 - **In-Memory Metrics Isolation**: Operational metrics (`total_requests`, `error_count`, latency records) are maintained in process memory within the running Python interpreter:
   - If the web service restarts, redeploys, or crashes, in-memory counters reset to initial zero values.
@@ -319,6 +428,6 @@ The entire application and CI/CD lifecycle operates within provider Free Tiers:
 
 ---
 
-## 15. License
+## 17. License
 
 This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).

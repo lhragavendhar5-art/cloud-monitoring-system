@@ -650,6 +650,10 @@
             <span class="box-val" id="liveSuccessReq">Not measured yet</span>
           </div>
           <div class="metric-eval-box">
+            <span class="box-label">Client Errors (4xx)</span>
+            <span class="box-val" id="liveClientErrorsReq">Not measured yet</span>
+          </div>
+          <div class="metric-eval-box">
             <span class="box-label">Server Errors (5xx)</span>
             <span class="box-val" id="liveErrorsReq">Not measured yet</span>
           </div>
@@ -944,10 +948,15 @@
         // Total, Success, Errors
         const total = data.total_requests ?? data.requests_total;
         const success = data.successful_requests ?? data.success_requests;
+        const clientErrors = data.client_error_count;
         const errors = data.error_count ?? data.server_errors ?? data.error_requests;
 
         document.getElementById('liveTotalReq').textContent = (total !== undefined && total !== null) ? Number(total).toLocaleString() : 'Not measured yet';
         document.getElementById('liveSuccessReq').textContent = (success !== undefined && success !== null) ? Number(success).toLocaleString() : 'Not measured yet';
+        const clientElem = document.getElementById('liveClientErrorsReq');
+        if (clientElem) {
+          clientElem.textContent = (clientErrors !== undefined && clientErrors !== null) ? Number(clientErrors).toLocaleString() : 'Not measured yet';
+        }
         document.getElementById('liveErrorsReq').textContent = (errors !== undefined && errors !== null) ? Number(errors).toLocaleString() : 'Not measured yet';
 
         // Error Rate
