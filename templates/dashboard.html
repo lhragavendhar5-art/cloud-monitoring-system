@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CloudMonitor - Application Dashboard</title>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --sidebar-bg: #1a1f36;
+      --sidebar-hover: #252d4a;
+      --sidebar-active: #2e385c;
+      --sidebar-text: #f8fafc;
+      --sidebar-muted: #94a3b8;
+      --main-bg: #f0f2f5;
+      --card-bg: #ffffff;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      --accent-blue: #3b82f6;
+      --accent-green: #22c55e;
+      --accent-red: #ef4444;
+      --accent-orange: #f59e0b;
+      --status-healthy: #22c55e;
+      --status-error: #ef4444;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+      --radius: 8px;
+      --transition: all 0.2s ease-in-out;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--main-bg);
+      color: var(--text-main);
+      display: flex;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Sidebar Styling */
+    .sidebar {
+      width: 250px;
+      background-color: var(--sidebar-bg);
+      color: var(--sidebar-text);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      transition: var(--transition);
+      z-index: 100;
+    }
+
+    .sidebar-header {
+      padding: 24px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sidebar-header .logo-icon {
+      font-size: 26px;
+      line-height: 1;
+      color: var(--accent-blue);
+      text-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
+    }
+
+    .sidebar-header .logo-text {
+      font-size: 1.18rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 20px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      color: var(--sidebar-muted);
+      text-decoration: none;
+      font-size: 0.92rem;
+      font-weight: 500;
+      border-radius: 6px;
+      transition: var(--transition);
+    }
+
+    .nav-link:hover {
+      background-color: var(--sidebar-hover);
+      color: #ffffff;
+    }
+
+    .nav-link.active {
+      background-color: var(--sidebar-active);
+      color: #ffffff;
+      font-weight: 600;
+      border-left: 3px solid var(--accent-blue);
+    }
+
+    .nav-link .nav-icon {
+      font-size: 1.1rem;
+      width: 20px;
+      text-align: center;
+    }
+
+    .sidebar-footer {
+      padding: 18px 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 0.78rem;
+      color: var(--sidebar-muted);
+      line-height: 1.5;
+    }
+
+    .sidebar-footer .footer-title {
+      color: #cbd5e1;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    /* Main Content Layout */
+    .main-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      overflow-y: auto;
+    }
+
+    /* Top Bar */
+    .topbar {
+      background-color: #ffffff;
+      border-bottom: 1px solid var(--border-color);
+      padding: 16px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 90;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .topbar-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: -0.01em;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .auto-refresh-pill {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background-color: #f8fafc;
+      padding: 6px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border-color);
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background-color: var(--accent-green);
+      border-radius: 50%;
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6); }
+      70% { transform: scale(1.05); box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+    }
+
+    .last-refreshed {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    .btn-refresh {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background-color: #ffffff;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .btn-refresh:hover {
+      background-color: #f8fafc;
+      border-color: #cbd5e1;
+      color: var(--accent-blue);
+    }
+
+    .btn-refresh .refresh-icon {
+      display: inline-block;
+      transition: transform 0.4s ease;
+      font-size: 1rem;
+    }
+
+    .btn-refresh.spinning .refresh-icon {
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Content Area */
+    .content-area {
+      padding: 24px 28px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* Info Banner */
+    .info-banner {
+      background-color: #fef3c7;
+      border-left: 4px solid var(--accent-orange);
+      color: #92400e;
+      padding: 12px 18px;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      line-height: 1.45;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .info-banner .banner-icon {
+      font-size: 1.1rem;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* Error Alert */
+    .error-banner {
+      background-color: #fef2f2;
+      border-left: 4px solid var(--accent-red);
+      color: #991b1b;
+      padding: 14px 18px;
+      border-radius: var(--radius);
+      font-size: 0.88rem;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-retry {
+      background-color: var(--accent-red);
+      color: #ffffff;
+      border: none;
+      padding: 5px 12px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Status Section */
+    .status-card {
+      background-color: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .status-badge-container {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      transition: var(--transition);
+    }
+
+    .status-healthy {
+      background-color: #dcfce7;
+      color: #15803d;
+      border: 1px solid #bbf7d0;
+    }
+
+    .status-unavailable {
+      background-color: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
+
+    .status-loading {
+      background-color: #f1f5f9;
+      color: #475569;
+      border: 1px solid #e2e8f0;
+    }
+
+    .status-meta-group {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+
+    .status-meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .status-meta-label {
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .status-meta-val {
+      font-size: 0.98rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    /* Metric Cards Grid */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+    }
+
+    .metric-card {
+      background-color: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .metric-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .metric-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+    }
+
+    .metric-card.accent-blue::before { background-color: var(--accent-blue); }
+    .metric-card.accent-green::before { background-color: var(--accent-green); }
+    .metric-card.accent-red::before { background-color: var(--accent-red); }
+    .metric-card.accent-orange::before { background-color: var(--accent-orange); }
+
+    .metric-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .metric-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .metric-card-icon {
+      font-size: 1.2rem;
+      opacity: 0.8;
+    }
+
+    .metric-value {
+      font-size: 2.1rem;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1.1;
+      margin-bottom: 6px;
+      letter-spacing: -0.03em;
+    }
+
+    .metric-subtext {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    /* Response Time Card & Charts */
+    .card-full {
+      background-color: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 22px 24px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .response-stats-badges {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .stat-pill {
+      background-color: #f8fafc;
+      border: 1px solid var(--border-color);
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    .stat-pill strong {
+      color: var(--text-main);
+      margin-left: 4px;
+    }
+
+    .chart-container {
+      position: relative;
+      width: 100%;
+      min-height: 240px;
+      max-height: 320px;
+    }
+
+    /* Activity Card Layout */
+    .activity-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    /* Table Styling */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+    }
+
+    table.activity-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.85rem;
+    }
+
+    table.activity-table th {
+      background-color: #f8fafc;
+      color: var(--text-muted);
+      font-weight: 600;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-color);
+      text-transform: uppercase;
+      font-size: 0.74rem;
+      letter-spacing: 0.04em;
+    }
+
+    table.activity-table td {
+      padding: 11px 14px;
+      border-bottom: 1px solid #f1f5f9;
+      color: var(--text-main);
+      white-space: nowrap;
+    }
+
+    table.activity-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    table.activity-table tr:hover td {
+      background-color: #fbfcfe;
+    }
+
+    .badge-method {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .method-get { background-color: #e0f2fe; color: #0369a1; }
+    .method-post { background-color: #dcfce7; color: #15803d; }
+    .method-put { background-color: #fef3c7; color: #b45309; }
+    .method-delete { background-color: #fee2e2; color: #b91c1c; }
+
+    .badge-status {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.76rem;
+      font-weight: 600;
+    }
+
+    .badge-2xx { background-color: #dcfce7; color: #166534; }
+    .badge-3xx { background-color: #e0f2fe; color: #075985; }
+    .badge-4xx { background-color: #fef3c7; color: #9a3412; }
+    .badge-5xx { background-color: #fee2e2; color: #991b1b; }
+
+    /* Empty state */
+    .empty-state {
+      padding: 36px 20px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+    }
+
+    .empty-state-icon {
+      font-size: 2rem;
+      margin-bottom: 8px;
+      display: block;
+      opacity: 0.6;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .metric-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .activity-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: static;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 16px;
+      }
+      .sidebar-header {
+        padding: 0;
+        border-bottom: none;
+      }
+      .sidebar-nav {
+        flex-direction: row;
+        padding: 0;
+        gap: 8px;
+      }
+      .nav-link.active {
+        border-left: none;
+        border-bottom: 2px solid var(--accent-blue);
+      }
+      .sidebar-footer {
+        display: none;
+      }
+      .topbar {
+        padding: 12px 16px;
+      }
+      .content-area {
+        padding: 16px;
+      }
+      .metric-grid {
+        grid-template-columns: 1fr;
+      }
+      .status-card {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <span class="logo-icon">☁</span>
+      <span class="logo-text">CloudMonitor</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/" class="nav-link active">
+        <span class="nav-icon">📊</span>
+        <span>Dashboard</span>
+      </a>
+      <a href="/evaluation" class="nav-link">
+        <span class="nav-icon">📋</span>
+        <span>Evaluation</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="footer-title">Cloud Computing FT-III</div>
+      <div>v1.0.0 • Production Build</div>
+    </div>
+  </aside>
+
+  <!-- Main Content Wrapper -->
+  <div class="main-wrapper">
+    <!-- Top Bar -->
+    <header class="topbar">
+      <h1 class="topbar-title">Application Dashboard</h1>
+      <div class="topbar-actions">
+        <div class="auto-refresh-pill" title="Dashboard auto-refreshes every 15 seconds">
+          <span class="pulse-dot"></span>
+          <span>Auto-refresh: <strong id="refreshTimer">15s</strong></span>
+        </div>
+        <div class="last-refreshed">
+          Last refreshed: <span id="lastRefreshedTime">Just now</span>
+        </div>
+        <button id="refreshBtn" class="btn-refresh" onclick="handleManualRefresh()">
+          <span class="refresh-icon">↻</span>
+          <span>Refresh</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Content Area -->
+    <main class="content-area">
+      <!-- Error State Banner -->
+      <div id="errorBanner" class="error-banner">
+        <div>
+          <strong>⚠ Connection Warning:</strong>
+          <span id="errorMessage">Unable to communicate with the monitoring API. Showing last cached data.</span>
+        </div>
+        <button class="btn-retry" onclick="handleManualRefresh()">Retry Now</button>
+      </div>
+
+      <!-- Info Banner -->
+      <div class="info-banner">
+        <span class="banner-icon">ℹ</span>
+        <div>
+          <strong>In-Memory Metrics:</strong> All metrics are stored in application memory and will reset when the server restarts. This is suitable for demonstration purposes.
+        </div>
+      </div>
+
+      <!-- Status Section -->
+      <section class="status-card">
+        <div class="status-badge-container">
+          <span id="statusBadge" class="status-badge status-loading">
+            ● Checking Status...
+          </span>
+        </div>
+        <div class="status-meta-group">
+          <div class="status-meta-item">
+            <span class="status-meta-label">Application Uptime</span>
+            <span class="status-meta-val" id="uptimeDisplay">--</span>
+          </div>
+          <div class="status-meta-item">
+            <span class="status-meta-label">Last Health Check</span>
+            <span class="status-meta-val" id="lastHealthCheckTime">--</span>
+          </div>
+          <div class="status-meta-item">
+            <span class="status-meta-label">Environment</span>
+            <span class="status-meta-val" id="environmentHost">Production (Cloud)</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Metric Cards Row (4 cards) -->
+      <section class="metric-grid">
+        <!-- 1. Total Requests -->
+        <div class="metric-card accent-blue">
+          <div class="metric-header">
+            <span class="metric-title">Total Requests</span>
+            <span class="metric-card-icon">⚡</span>
+          </div>
+          <div class="metric-value" id="valTotalRequests">0</div>
+          <div class="metric-subtext">All inbound HTTP queries</div>
+        </div>
+
+        <!-- 2. Successful Requests -->
+        <div class="metric-card accent-green">
+          <div class="metric-header">
+            <span class="metric-title">Successful Requests</span>
+            <span class="metric-card-icon">✓</span>
+          </div>
+          <div class="metric-value" id="valSuccessfulRequests">0</div>
+          <div class="metric-subtext">HTTP 2xx successful responses</div>
+        </div>
+
+        <!-- 3. Server Errors -->
+        <div class="metric-card accent-red">
+          <div class="metric-header">
+            <span class="metric-title">Server Errors</span>
+            <span class="metric-card-icon">✕</span>
+          </div>
+          <div class="metric-value" id="valServerErrors">0</div>
+          <div class="metric-subtext">HTTP 5xx server exceptions</div>
+        </div>
+
+        <!-- 4. Error Rate -->
+        <div class="metric-card accent-orange">
+          <div class="metric-header">
+            <span class="metric-title">Error Rate</span>
+            <span class="metric-card-icon">%</span>
+          </div>
+          <div class="metric-value" id="valErrorRate">N/A</div>
+          <div class="metric-subtext">Server errors / total requests</div>
+        </div>
+      </section>
+
+      <!-- Response Time Card -->
+      <section class="card-full">
+        <div class="card-header-row">
+          <div class="card-title">
+            <span>⏱ Response Time Latency</span>
+          </div>
+          <div class="response-stats-badges">
+            <div class="stat-pill">Avg: <strong id="valAvgResp">No data yet</strong></div>
+            <div class="stat-pill">Min: <strong id="valMinResp">No data yet</strong></div>
+            <div class="stat-pill">Max: <strong id="valMaxResp">No data yet</strong></div>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="responseTimeChart"></canvas>
+        </div>
+      </section>
+
+      <!-- Request Activity Card -->
+      <section class="card-full">
+        <div class="card-header-row">
+          <div class="card-title">
+            <span>📈 Request Activity & Recent Traffic</span>
+          </div>
+          <div class="stat-pill">
+            Showing last <strong id="recentCountDisplay">0</strong> events
+          </div>
+        </div>
+        
+        <div class="activity-grid">
+          <!-- Activity Chart -->
+          <div>
+            <div style="font-size:0.82rem; font-weight:600; color:var(--text-muted); margin-bottom:10px; text-transform:uppercase;">
+              Status Code Distribution
+            </div>
+            <div class="chart-container" style="min-height: 220px; max-height: 260px;">
+              <canvas id="activityChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Recent Requests Table -->
+          <div>
+            <div style="font-size:0.82rem; font-weight:600; color:var(--text-muted); margin-bottom:10px; text-transform:uppercase;">
+              Recent Inbound Requests
+            </div>
+            <div class="table-container">
+              <table class="activity-table">
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Method</th>
+                    <th>Path</th>
+                    <th>Status</th>
+                    <th>Latency</th>
+                  </tr>
+                </thead>
+                <tbody id="activityTableBody">
+                  <tr>
+                    <td colspan="5" class="empty-state">
+                      <span class="empty-state-icon">📄</span>
+                      No requests recorded yet. Interact with the application to generate activity.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Dashboard JavaScript Logic -->
+  <script>
+    // Global Chart.js references
+    let responseTimeChartInstance = null;
+    let activityChartInstance = null;
+
+    // Countdown timer state
+    const REFRESH_INTERVAL_SECONDS = 15;
+    let countdownRemaining = REFRESH_INTERVAL_SECONDS;
+    let countdownIntervalId = null;
+    let isFetching = false;
+
+    // Format uptime into "Xd Xh Xm Xs"
+    function formatUptime(seconds) {
+      if (seconds === null || seconds === undefined || isNaN(seconds)) {
+        return "N/A";
+      }
+      seconds = Math.max(0, Math.floor(seconds));
+      const d = Math.floor(seconds / 86400);
+      const h = Math.floor((seconds % 86400) / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = seconds % 60;
+
+      const parts = [];
+      if (d > 0) parts.push(`${d}d`);
+      if (h > 0 || d > 0) parts.push(`${h}h`);
+      if (m > 0 || h > 0 || d > 0) parts.push(`${m}m`);
+      parts.push(`${s}s`);
+      return parts.join(" ");
+    }
+
+    // Format timestamps nicely
+    function formatTimestamp(ts) {
+      if (!ts) return "--";
+      try {
+        const d = new Date(ts);
+        if (isNaN(d.getTime())) return String(ts);
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      } catch (e) {
+        return String(ts);
+      }
+    }
+
+    // Initialize or Update the Response Time Line Chart
+    function updateResponseTimeChart(samples) {
+      const ctx = document.getElementById('responseTimeChart').getContext('2d');
+
+      // Normalize samples
+      let labels = [];
+      let data = [];
+
+      if (Array.isArray(samples) && samples.length > 0) {
+        samples.forEach((item, idx) => {
+          if (typeof item === 'number') {
+            labels.push(`Sample #${idx + 1}`);
+            data.push(Number(item.toFixed(2)));
+          } else if (item && typeof item === 'object') {
+            const timeLabel = item.timestamp ? formatTimestamp(item.timestamp) : `#${idx + 1}`;
+            labels.push(timeLabel);
+            const val = item.response_time_ms ?? item.duration_ms ?? item.latency_ms ?? item.value ?? 0;
+            data.push(Number(Number(val).toFixed(2)));
+          }
+        });
+      }
+
+      if (data.length === 0) {
+        labels = ['No Data'];
+        data = [0];
+      }
+
+      if (responseTimeChartInstance) {
+        responseTimeChartInstance.data.labels = labels;
+        responseTimeChartInstance.data.datasets[0].data = data;
+        responseTimeChartInstance.update();
+      } else {
+        responseTimeChartInstance = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Response Time (ms)',
+              data: data,
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.08)',
+              borderWidth: 2,
+              pointBackgroundColor: '#3b82f6',
+              pointRadius: data.length === 1 && labels[0] === 'No Data' ? 0 : 3,
+              pointHoverRadius: 6,
+              tension: 0.3,
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return ` ${context.parsed.y} ms`;
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                ticks: {
+                  font: { size: 11 },
+                  color: '#64748b',
+                  maxTicksLimit: 12
+                }
+              },
+              y: {
+                beginAtZero: true,
+                grid: { color: 'rgba(226, 232, 240, 0.6)' },
+                ticks: {
+                  font: { size: 11 },
+                  color: '#64748b',
+                  callback: function(val) { return val + ' ms'; }
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    // Initialize or Update the Activity Status Bar Chart
+    function updateActivityChart(recentRequests) {
+      const ctx = document.getElementById('activityChart').getContext('2d');
+
+      // Tally HTTP status categories: 2xx, 3xx, 4xx, 5xx
+      let count2xx = 0;
+      let count3xx = 0;
+      let count4xx = 0;
+      let count5xx = 0;
+
+      if (Array.isArray(recentRequests)) {
+        recentRequests.forEach(req => {
+          const status = Number(req.status_code || req.status || 0);
+          if (status >= 200 && status < 300) count2xx++;
+          else if (status >= 300 && status < 400) count3xx++;
+          else if (status >= 400 && status < 500) count4xx++;
+          else if (status >= 500) count5xx++;
+        });
+      }
+
+      const labels = ['2xx Success', '3xx Redir', '4xx Client Err', '5xx Server Err'];
+      const data = [count2xx, count3xx, count4xx, count5xx];
+      const bgColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444'];
+
+      if (activityChartInstance) {
+        activityChartInstance.data.datasets[0].data = data;
+        activityChartInstance.update();
+      } else {
+        activityChartInstance = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Request Count',
+              data: data,
+              backgroundColor: bgColors,
+              borderRadius: 4,
+              borderSkipped: false
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return ` Count: ${context.parsed.y}`;
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                ticks: { font: { size: 10 }, color: '#64748b' }
+              },
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  stepSize: 1,
+                  font: { size: 10 },
+                  color: '#64748b'
+                },
+                grid: { color: 'rgba(226, 232, 240, 0.6)' }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    // Render Recent Requests Table
+    function renderRecentRequestsTable(recentRequests) {
+      const tbody = document.getElementById('activityTableBody');
+      const countDisplay = document.getElementById('recentCountDisplay');
+
+      if (!Array.isArray(recentRequests) || recentRequests.length === 0) {
+        countDisplay.textContent = '0';
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="empty-state">
+              <span class="empty-state-icon">📄</span>
+              No requests recorded yet. Interact with the application to generate activity.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      countDisplay.textContent = recentRequests.length;
+      tbody.innerHTML = '';
+
+      // Show in reverse chronological order if not already
+      const rows = [...recentRequests].reverse();
+
+      rows.slice(0, 15).forEach(req => {
+        const tr = document.createElement('tr');
+
+        // Timestamp
+        const timeCell = document.createElement('td');
+        timeCell.textContent = formatTimestamp(req.timestamp);
+        tr.appendChild(timeCell);
+
+        // Method
+        const methodCell = document.createElement('td');
+        const method = (req.method || 'GET').toUpperCase();
+        let methodClass = 'method-get';
+        if (method === 'POST') methodClass = 'method-post';
+        else if (method === 'PUT' || method === 'PATCH') methodClass = 'method-put';
+        else if (method === 'DELETE') methodClass = 'method-delete';
+        methodCell.innerHTML = `<span class="badge-method ${methodClass}">${method}</span>`;
+        tr.appendChild(methodCell);
+
+        // Path
+        const pathCell = document.createElement('td');
+        pathCell.style.fontFamily = 'monospace';
+        pathCell.style.fontSize = '0.82rem';
+        pathCell.textContent = req.path || req.endpoint || '/';
+        tr.appendChild(pathCell);
+
+        // Status
+        const statusCell = document.createElement('td');
+        const code = Number(req.status_code || req.status || 200);
+        let badgeClass = 'badge-2xx';
+        if (code >= 300 && code < 400) badgeClass = 'badge-3xx';
+        else if (code >= 400 && code < 500) badgeClass = 'badge-4xx';
+        else if (code >= 500) badgeClass = 'badge-5xx';
+        statusCell.innerHTML = `<span class="badge-status ${badgeClass}">${code}</span>`;
+        tr.appendChild(statusCell);
+
+        // Response Time
+        const latencyCell = document.createElement('td');
+        const lat = req.response_time_ms ?? req.duration_ms ?? req.latency;
+        if (lat !== undefined && lat !== null) {
+          latencyCell.textContent = `${Number(lat).toFixed(1)} ms`;
+        } else {
+          latencyCell.textContent = 'N/A';
+        }
+        tr.appendChild(latencyCell);
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Main fetch & UI refresh function
+    async function fetchDashboardData() {
+      if (isFetching) return;
+      isFetching = true;
+
+      const refreshBtn = document.getElementById('refreshBtn');
+      const errorBanner = document.getElementById('errorBanner');
+      refreshBtn.classList.add('spinning');
+
+      try {
+        // Fetch all 3 endpoints concurrently
+        const [healthRes, metricsRes, activityRes] = await Promise.allSettled([
+          fetch('/health'),
+          fetch('/metrics'),
+          fetch('/api/activity')
+        ]);
+
+        let hasError = false;
+
+        // Process /health
+        const statusBadge = document.getElementById('statusBadge');
+        const uptimeDisplay = document.getElementById('uptimeDisplay');
+        const lastHealthCheckTime = document.getElementById('lastHealthCheckTime');
+        const environmentHost = document.getElementById('environmentHost');
+
+        if (healthRes.status === 'fulfilled' && healthRes.value.ok) {
+          const healthData = await healthRes.value.json();
+          const isHealthy = healthData.status === 'healthy' || healthData.status === 'UP' || healthData.status === 'ok';
+
+          if (isHealthy) {
+            statusBadge.className = 'status-badge status-healthy';
+            statusBadge.textContent = '● Healthy';
+          } else {
+            statusBadge.className = 'status-badge status-unavailable';
+            statusBadge.textContent = '● Unavailable';
+          }
+
+          const uptimeSec = healthData.uptime_seconds ?? healthData.uptime;
+          uptimeDisplay.textContent = formatUptime(uptimeSec);
+          lastHealthCheckTime.textContent = formatTimestamp(healthData.timestamp || new Date());
+
+          if (healthData.hostname || healthData.environment) {
+            environmentHost.textContent = healthData.hostname || healthData.environment;
+          } else {
+            environmentHost.textContent = window.location.hostname || 'Cloud Host';
+          }
+        } else {
+          hasError = true;
+          statusBadge.className = 'status-badge status-unavailable';
+          statusBadge.textContent = '● Unavailable';
+        }
+
+        // Process /metrics
+        let samples = [];
+        if (metricsRes.status === 'fulfilled' && metricsRes.value.ok) {
+          const metricsData = await metricsRes.value.json();
+
+          // Metrics numbers
+          const total = metricsData.total_requests ?? metricsData.requests_total ?? 0;
+          const successful = metricsData.successful_requests ?? metricsData.success_requests ?? 0;
+          const errors = metricsData.server_errors ?? metricsData.error_requests ?? 0;
+
+          document.getElementById('valTotalRequests').textContent = total.toLocaleString();
+          document.getElementById('valSuccessfulRequests').textContent = successful.toLocaleString();
+          document.getElementById('valServerErrors').textContent = errors.toLocaleString();
+
+          // Error rate calculation (show N/A if total requests is 0)
+          const errorRateElem = document.getElementById('valErrorRate');
+          if (total > 0) {
+            let rate = metricsData.error_rate ?? metricsData.error_rate_percent;
+            if (rate !== undefined && rate !== null) {
+              if (typeof rate === 'number' && rate <= 1 && rate > 0) rate = rate * 100;
+              errorRateElem.textContent = `${Number(rate).toFixed(1)}%`;
+            } else {
+              const calcRate = (errors / total) * 100;
+              errorRateElem.textContent = `${calcRate.toFixed(1)}%`;
+            }
+          } else {
+            errorRateElem.textContent = 'N/A';
+          }
+
+          // Response times
+          const avgElem = document.getElementById('valAvgResp');
+          const minElem = document.getElementById('valMinResp');
+          const maxElem = document.getElementById('valMaxResp');
+
+          const rt = metricsData.response_times || {};
+          const avgVal = rt.avg_ms ?? rt.avg ?? metricsData.avg_response_time_ms;
+          const minVal = rt.min_ms ?? rt.min ?? metricsData.min_response_time_ms;
+          const maxVal = rt.max_ms ?? rt.max ?? metricsData.max_response_time_ms;
+
+          avgElem.textContent = (avgVal !== undefined && avgVal !== null) ? `${Number(avgVal).toFixed(1)} ms` : 'No data yet';
+          minElem.textContent = (minVal !== undefined && minVal !== null) ? `${Number(minVal).toFixed(1)} ms` : 'No data yet';
+          maxElem.textContent = (maxVal !== undefined && maxVal !== null) ? `${Number(maxVal).toFixed(1)} ms` : 'No data yet';
+
+          // Extract response time samples
+          samples = metricsData.response_time_samples ?? metricsData.samples ?? [];
+          updateResponseTimeChart(samples);
+
+          // If uptime was in metrics and not health
+          if (uptimeDisplay.textContent === '--' && metricsData.uptime_seconds !== undefined) {
+            uptimeDisplay.textContent = formatUptime(metricsData.uptime_seconds);
+          }
+        } else {
+          hasError = true;
+          updateResponseTimeChart([]);
+        }
+
+        // Process /api/activity
+        let recentList = [];
+        if (activityRes.status === 'fulfilled' && activityRes.value.ok) {
+          const activityData = await activityRes.value.json();
+          if (Array.isArray(activityData)) {
+            recentList = activityData;
+          } else if (activityData && Array.isArray(activityData.recent_requests)) {
+            recentList = activityData.recent_requests;
+          }
+        } else {
+          // If /api/activity failed or not implemented, check if metrics had recent_requests
+          if (metricsRes.status === 'fulfilled' && metricsRes.value.ok) {
+            // Already checked
+          }
+        }
+
+        updateActivityChart(recentList);
+        renderRecentRequestsTable(recentList);
+
+        // Update error banner display
+        if (hasError) {
+          errorBanner.style.display = 'flex';
+        } else {
+          errorBanner.style.display = 'none';
+        }
+
+        // Update refreshed timestamp
+        document.getElementById('lastRefreshedTime').textContent = formatTimestamp(new Date());
+
+      } catch (err) {
+        console.error('Error fetching dashboard metrics:', err);
+        errorBanner.style.display = 'flex';
+        document.getElementById('errorMessage').textContent = 'Failed to fetch metrics: ' + (err.message || 'Network error');
+      } finally {
+        isFetching = false;
+        refreshBtn.classList.remove('spinning');
+        resetCountdown();
+      }
+    }
+
+    // Manual refresh action
+    function handleManualRefresh() {
+      fetchDashboardData();
+    }
+
+    // Countdown management (15 seconds)
+    function resetCountdown() {
+      countdownRemaining = REFRESH_INTERVAL_SECONDS;
+      updateCountdownDisplay();
+    }
+
+    function updateCountdownDisplay() {
+      const timerElem = document.getElementById('refreshTimer');
+      if (timerElem) {
+        timerElem.textContent = `${countdownRemaining}s`;
+      }
+    }
+
+    function startAutoRefreshLoop() {
+      if (countdownIntervalId) clearInterval(countdownIntervalId);
+      
+      countdownIntervalId = setInterval(() => {
+        countdownRemaining--;
+        if (countdownRemaining <= 0) {
+          fetchDashboardData();
+        } else {
+          updateCountdownDisplay();
+        }
+      }, 1000);
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchDashboardData();
+      startAutoRefreshLoop();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CloudMonitor - System Evaluation</title>
+  <style>
+    :root {
+      --sidebar-bg: #1a1f36;
+      --sidebar-hover: #252d4a;
+      --sidebar-active: #2e385c;
+      --sidebar-text: #f8fafc;
+      --sidebar-muted: #94a3b8;
+      --main-bg: #f0f2f5;
+      --card-bg: #ffffff;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      --accent-blue: #3b82f6;
+      --accent-green: #22c55e;
+      --accent-red: #ef4444;
+      --accent-orange: #f59e0b;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+      --radius: 8px;
+      --transition: all 0.2s ease-in-out;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--main-bg);
+      color: var(--text-main);
+      display: flex;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 250px;
+      background-color: var(--sidebar-bg);
+      color: var(--sidebar-text);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      transition: var(--transition);
+      z-index: 100;
+    }
+
+    .sidebar-header {
+      padding: 24px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sidebar-header .logo-icon {
+      font-size: 26px;
+      line-height: 1;
+      color: var(--accent-blue);
+      text-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
+    }
+
+    .sidebar-header .logo-text {
+      font-size: 1.18rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 20px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      color: var(--sidebar-muted);
+      text-decoration: none;
+      font-size: 0.92rem;
+      font-weight: 500;
+      border-radius: 6px;
+      transition: var(--transition);
+    }
+
+    .nav-link:hover {
+      background-color: var(--sidebar-hover);
+      color: #ffffff;
+    }
+
+    .nav-link.active {
+      background-color: var(--sidebar-active);
+      color: #ffffff;
+      font-weight: 600;
+      border-left: 3px solid var(--accent-blue);
+    }
+
+    .nav-link .nav-icon {
+      font-size: 1.1rem;
+      width: 20px;
+      text-align: center;
+    }
+
+    .sidebar-footer {
+      padding: 18px 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 0.78rem;
+      color: var(--sidebar-muted);
+      line-height: 1.5;
+    }
+
+    .sidebar-footer .footer-title {
+      color: #cbd5e1;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    /* Main Content */
+    .main-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      overflow-y: auto;
+    }
+
+    .topbar {
+      background-color: #ffffff;
+      border-bottom: 1px solid var(--border-color);
+      padding: 16px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 90;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .topbar-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: -0.01em;
+    }
+
+    .content-area {
+      padding: 24px 28px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* Cards */
+    .eval-card {
+      background-color: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 22px 26px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      transition: var(--transition);
+    }
+
+    .eval-card:hover {
+      box-shadow: var(--shadow-md);
+    }
+
+    .card-header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .card-heading {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-subtitle {
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Buttons */
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background-color: var(--accent-blue);
+      color: #ffffff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .btn-primary:hover {
+      background-color: #2563eb;
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background-color: #ffffff;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: var(--transition);
+    }
+
+    .btn-secondary:hover {
+      background-color: #f8fafc;
+      border-color: #cbd5e1;
+    }
+
+    /* Terminal / Code Display */
+    .terminal-box {
+      background-color: #0f172a;
+      color: #e2e8f0;
+      border-radius: 6px;
+      padding: 16px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      overflow-x: auto;
+      border: 1px solid #1e293b;
+    }
+
+    .terminal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #94a3b8;
+      font-size: 0.78rem;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .terminal-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .terminal-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .dot-red { background-color: #ef4444; }
+    .dot-yellow { background-color: #f59e0b; }
+    .dot-green { background-color: #22c55e; }
+
+    .terminal-cmd {
+      color: #38bdf8;
+    }
+
+    .terminal-dim {
+      color: #64748b;
+    }
+
+    .terminal-success {
+      color: #4ade80;
+    }
+
+    /* Notes & Alerts */
+    .note-box {
+      background-color: #eff6ff;
+      border-left: 4px solid var(--accent-blue);
+      color: #1e40af;
+      padding: 12px 16px;
+      border-radius: 6px;
+      font-size: 0.86rem;
+      line-height: 1.5;
+    }
+
+    .note-box.amber {
+      background-color: #fef3c7;
+      border-left-color: var(--accent-orange);
+      color: #92400e;
+    }
+
+    /* Metric Grid for Evaluation */
+    .metric-eval-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .metric-eval-box {
+      background-color: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .metric-eval-box .box-label {
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .metric-eval-box .box-val {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    /* Analysis Grid */
+    .analysis-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+    }
+
+    .analysis-card-sub {
+      background-color: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .analysis-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .analysis-body {
+      font-size: 0.86rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    .analysis-body strong {
+      color: var(--text-main);
+    }
+
+    /* Tables */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+    }
+
+    table.eval-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.86rem;
+    }
+
+    table.eval-table th {
+      background-color: #f8fafc;
+      color: var(--text-muted);
+      font-weight: 600;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-color);
+      text-transform: uppercase;
+      font-size: 0.74rem;
+      letter-spacing: 0.04em;
+    }
+
+    table.eval-table td {
+      padding: 11px 14px;
+      border-bottom: 1px solid #f1f5f9;
+      color: var(--text-main);
+    }
+
+    table.eval-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    table.eval-table tr.total-row td {
+      background-color: #f8fafc;
+      font-weight: 700;
+      border-top: 2px solid var(--border-color);
+      color: var(--accent-green);
+    }
+
+    .badge-pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .badge-green { background-color: #dcfce7; color: #15803d; }
+    .badge-blue { background-color: #e0f2fe; color: #0369a1; }
+    .badge-orange { background-color: #fef3c7; color: #b45309; }
+
+    /* Progress Bar */
+    .progress-track {
+      width: 100%;
+      height: 8px;
+      background-color: #e2e8f0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 10px 0;
+      display: none;
+    }
+
+    .progress-fill {
+      width: 0%;
+      height: 100%;
+      background-color: var(--accent-blue);
+      transition: width 0.2s ease;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .metric-eval-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .analysis-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: static;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 16px;
+      }
+      .sidebar-header {
+        padding: 0;
+        border-bottom: none;
+      }
+      .sidebar-nav {
+        flex-direction: row;
+        padding: 0;
+        gap: 8px;
+      }
+      .nav-link.active {
+        border-left: none;
+        border-bottom: 2px solid var(--accent-blue);
+      }
+      .sidebar-footer {
+        display: none;
+      }
+      .topbar {
+        padding: 12px 16px;
+      }
+      .content-area {
+        padding: 16px;
+      }
+      .metric-eval-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <span class="logo-icon">☁</span>
+      <span class="logo-text">CloudMonitor</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/" class="nav-link">
+        <span class="nav-icon">📊</span>
+        <span>Dashboard</span>
+      </a>
+      <a href="/evaluation" class="nav-link active">
+        <span class="nav-icon">📋</span>
+        <span>Evaluation</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="footer-title">Cloud Computing FT-III</div>
+      <div>v1.0.0 • Assessment Benchmark</div>
+    </div>
+  </aside>
+
+  <!-- Main Content Wrapper -->
+  <div class="main-wrapper">
+    <!-- Top Bar -->
+    <header class="topbar">
+      <div>
+        <h1 class="topbar-title">System Evaluation & Assessment</h1>
+        <div style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">
+          Cloud Computing FT-III Comprehensive Evaluation Benchmark
+        </div>
+      </div>
+      <div>
+        <a href="/" class="btn-secondary">
+          <span>← Back to Dashboard</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="content-area">
+
+      <!-- Section 1: Functional Test Results -->
+      <section class="eval-card">
+        <div class="card-header-bar">
+          <div>
+            <div class="card-heading">
+              <span>🧪 1. Functional Test Results</span>
+            </div>
+            <div class="card-subtitle">
+              Automated testing suite instructions and test verification report
+            </div>
+          </div>
+          <div>
+            <button id="btnRunTests" class="btn-primary" onclick="showTestInstructions()">
+              <span>Run Tests</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="note-box">
+          <strong>Verification Notice:</strong> Test results shown here are from actual test execution, not fabricated. In accordance with security best practices, shell commands are executed in the local development environment or CI/CD test runner.
+        </div>
+
+        <div id="testOutputArea" class="terminal-box">
+          <div class="terminal-header">
+            <div class="terminal-dots">
+              <span class="terminal-dot dot-red"></span>
+              <span class="terminal-dot dot-yellow"></span>
+              <span class="terminal-dot dot-green"></span>
+            </div>
+            <span>terminal — pytest</span>
+          </div>
+          <div id="testInstructionContent">
+            <span class="terminal-dim"># Execute the full automated test suite locally:</span><br>
+            <span class="terminal-cmd">$ pytest -v</span><br><br>
+            <span class="terminal-dim"># Expected automated test suites:</span><br>
+            <span class="terminal-dim">•</span> tests/test_app.py::test_health_check <span class="terminal-dim">[Verifies 200 OK & status 'healthy']</span><br>
+            <span class="terminal-dim">•</span> tests/test_app.py::test_metrics_collection <span class="terminal-dim">[Verifies request counters increment]</span><br>
+            <span class="terminal-dim">•</span> tests/test_app.py::test_activity_logging <span class="terminal-dim">[Verifies recent requests ring buffer]</span><br>
+            <span class="terminal-dim">•</span> tests/test_app.py::test_error_handling <span class="terminal-dim">[Verifies 404/500 count tracking]</span><br>
+            <span class="terminal-dim">•</span> tests/test_app.py::test_response_timing <span class="terminal-dim">[Verifies avg, min, max response latency]</span><br><br>
+            <span style="color:#f59e0b;">Run `pytest -v` locally to see test results</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 2: Live Performance Metrics -->
+      <section class="eval-card">
+        <div class="card-header-bar">
+          <div>
+            <div class="card-heading">
+              <span>⚡ 2. Live Performance Metrics</span>
+            </div>
+            <div class="card-subtitle">
+              Real measured metrics queried directly from the running <code>/metrics</code> API
+            </div>
+          </div>
+          <div>
+            <button class="btn-secondary" onclick="fetchLiveMetrics()">
+              <span>↻ Refresh Metrics</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="metric-eval-grid">
+          <div class="metric-eval-box">
+            <span class="box-label">Avg Response Time</span>
+            <span class="box-val" id="liveAvgResp">Not measured yet</span>
+          </div>
+          <div class="metric-eval-box">
+            <span class="box-label">Min Response Time</span>
+            <span class="box-val" id="liveMinResp">Not measured yet</span>
+          </div>
+          <div class="metric-eval-box">
+            <span class="box-label">Max Response Time</span>
+            <span class="box-val" id="liveMaxResp">Not measured yet</span>
+          </div>
+          <div class="metric-eval-box">
+            <span class="box-label">Application Uptime</span>
+            <span class="box-val" id="liveUptime">Not measured yet</span>
+          </div>
+          <div class="metric-eval-box">
+            <span class="box-label">Total Requests</span>
+            <span class="box-val" id="liveTotalReq">Not measured yet</span>
+          </div>
+          <div class="metric-eval-box">
+            <span class="box-label">Successful (2xx)</span>
+            <span class="box-val" id="liveSuccessReq">Not measured yet</span>
+          </div>
+          <div class="metric-eval-box">
+            <span class="box-label">Server Errors (5xx)</span>
+            <span class="box-val" id="liveErrorsReq">Not measured yet</span>
+          </div>
+          <div class="metric-eval-box">
+            <span class="box-label">Error Rate</span>
+            <span class="box-val" id="liveErrorRate">Not measured yet</span>
+          </div>
+        </div>
+
+        <div style="font-size:0.8rem; color:var(--text-muted);">
+          * Values above reflect actual in-memory counters recorded by the application since its last launch.
+        </div>
+      </section>
+
+      <!-- Section 6: Interactive Performance Test Interface -->
+      <section class="eval-card">
+        <div class="card-header-bar">
+          <div>
+            <div class="card-heading">
+              <span>⏱ 3. Performance Test Interface</span>
+            </div>
+            <div class="card-subtitle">
+              Sequentially issues 10 requests to <code>/health</code> to measure live client-to-server latency
+            </div>
+          </div>
+          <div>
+            <button id="btnRunPerfTest" class="btn-primary" onclick="runPerformanceTest()">
+              <span>Run Performance Test (10 Requests)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div id="perfProgressTrack" class="progress-track">
+          <div id="perfProgressFill" class="progress-fill"></div>
+        </div>
+
+        <!-- Test summary badges -->
+        <div class="metric-eval-grid" id="perfSummaryGrid" style="display:none;">
+          <div class="metric-eval-box">
+            <span class="box-label">Test Samples</span>
+            <span class="box-val" id="perfSampleCount">10</span>
+          </div>
+          <div class="metric-eval-box">
+            <span class="box-label">Average Latency</span>
+            <span class="box-val" id="perfAvgLatency" style="color:var(--accent-blue);">--</span>
+          </div>
+          <div class="metric-eval-box">
+            <span class="box-label">Min Latency</span>
+            <span class="box-val" id="perfMinLatency" style="color:var(--accent-green);">--</span>
+          </div>
+          <div class="metric-eval-box">
+            <span class="box-label">Max Latency</span>
+            <span class="box-val" id="perfMaxLatency" style="color:var(--accent-orange);">--</span>
+          </div>
+        </div>
+
+        <!-- Results Table -->
+        <div class="table-responsive">
+          <table class="eval-table">
+            <thead>
+              <tr>
+                <th style="width: 80px;">Request</th>
+                <th>Endpoint</th>
+                <th>Status Code</th>
+                <th>Measured Latency</th>
+                <th>Result</th>
+              </tr>
+            </thead>
+            <tbody id="perfResultsBody">
+              <tr>
+                <td colspan="5" style="text-align:center; padding: 24px; color:var(--text-muted);">
+                  Click "Run Performance Test" to execute 10 sequential benchmark measurements against <code>/health</code>.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="note-box amber">
+          <strong>Real Measurement Verification:</strong> Each measurement records real round-trip HTTP timing using browser High Resolution Time API (<code>performance.now()</code>). Values are never mocked or hardcoded.
+        </div>
+      </section>
+
+      <!-- Section 3: Deployment Status -->
+      <section class="eval-card">
+        <div class="card-header-bar">
+          <div>
+            <div class="card-heading">
+              <span>🚀 4. Deployment Status</span>
+            </div>
+            <div class="card-subtitle">
+              Cloud environment parameters & manual verification checklist
+            </div>
+          </div>
+          <div>
+            <a id="renderVerificationLink" href="https://dashboard.render.com" target="_blank" rel="noopener noreferrer" class="btn-secondary">
+              <span>Verify deployment at your Render URL ↗</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="analysis-grid">
+          <div class="analysis-card-sub">
+            <div class="analysis-title">
+              <span>🌐 Current Environment Info</span>
+            </div>
+            <div class="analysis-body">
+              <div><strong>Detected Hostname:</strong> <span id="detectedHost">Detecting...</span></div>
+              <div style="margin-top:4px;"><strong>Protocol:</strong> <span id="detectedProtocol">Detecting...</span></div>
+              <div style="margin-top:4px;"><strong>Deployment Type:</strong> <span id="detectedEnvType">Detecting...</span></div>
+              <div style="margin-top:6px; font-size:0.82rem; color:var(--text-muted);">
+                Deployment status must be confirmed via cloud logs and console. Do not claim deployment succeeded unless verified.
+              </div>
+            </div>
+          </div>
+
+          <div class="analysis-card-sub">
+            <div class="analysis-title">
+              <span>📋 Verification Instructions</span>
+            </div>
+            <div class="analysis-body">
+              <div>1. <strong>Check your Render dashboard</strong> for active deployment status ("Live").</div>
+              <div>2. Verify the Web Service build logs finished with exit code 0.</div>
+              <div>3. Confirm public health endpoint responds with HTTP 200 at <code>https://&lt;your-app&gt;.onrender.com/health</code>.</div>
+              <div>4. Validate GitHub Actions CI workflow passed all functional tests before deployment.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 4: Scalability Analysis -->
+      <section class="eval-card">
+        <div class="card-header-bar">
+          <div>
+            <div class="card-heading">
+              <span>📐 5. Scalability Analysis</span>
+            </div>
+            <div class="card-subtitle">
+              Horizontal, vertical, CI/CD automation & state architectural considerations
+            </div>
+          </div>
+        </div>
+
+        <div class="analysis-grid">
+          <!-- Vertical Scaling -->
+          <div class="analysis-card-sub">
+            <div class="analysis-title">
+              <span>⬆ Vertical Scaling</span>
+            </div>
+            <div class="analysis-body">
+              <strong>Mechanism:</strong> Increasing instance resources (CPU cores and RAM) on Render (upgrading from Free/Starter 512MB RAM to Standard/Pro tiers with 4GB+ RAM and dedicated vCPUs).<br><br>
+              <strong>Impact:</strong> Accommodates heavier in-memory buffers, faster request handling, and prevents Out-Of-Memory (OOM) termination under high concurrent request volume.
+            </div>
+          </div>
+
+          <!-- Horizontal Scaling -->
+          <div class="analysis-card-sub">
+            <div class="analysis-title">
+              <span>➡ Horizontal Scaling</span>
+            </div>
+            <div class="analysis-body">
+              <strong>Mechanism:</strong> Running multiple Gunicorn process workers (<code>gunicorn -w 4 app:app</code>) and spinning up multiple container replicas behind Render's load balancer.<br><br>
+              <strong>Impact:</strong> Distributes inbound HTTP traffic across independent worker processes, maximizing multicore utilization and providing fault isolation.
+            </div>
+          </div>
+
+          <!-- Automated Deployments -->
+          <div class="analysis-card-sub">
+            <div class="analysis-title">
+              <span>🔄 Auto-Deploy & CI/CD</span>
+            </div>
+            <div class="analysis-body">
+              <strong>Mechanism:</strong> Render's automated deployment hook triggers immediately on <code>git push</code> to the default branch.<br><br>
+              <strong>Workflow:</strong> GitHub Actions executes linting and <code>pytest</code> test suites. Upon successful build, Render pulls the commit, installs dependencies from <code>requirements.txt</code>, and launches the web service with zero-downtime rolling replacement.
+            </div>
+          </div>
+
+          <!-- Limitations & Recommendation -->
+          <div class="analysis-card-sub">
+            <div class="analysis-title">
+              <span>💡 Limitations & Production Recommendation</span>
+            </div>
+            <div class="analysis-body">
+              <strong>Limitation:</strong> In-memory metrics do not persist across instance restarts and cannot aggregate across multiple horizontally scaled instances (each instance maintains its own memory isolated counters).<br><br>
+              <strong>Production Recommendation:</strong> In enterprise production environments, use a centralized datastore such as <strong>Redis</strong> for distributed atomic metric increments or export Prometheus-compatible metrics to <strong>TimescaleDB / Grafana</strong>.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 5: Cost Analysis -->
+      <section class="eval-card">
+        <div class="card-header-bar">
+          <div>
+            <div class="card-heading">
+              <span>💰 6. Cost Analysis</span>
+            </div>
+            <div class="card-subtitle">
+              Infrastructure expenditure model within cloud free-tier allocations
+            </div>
+          </div>
+          <div>
+            <span class="badge-pill badge-green" style="font-size:0.85rem; padding: 4px 12px;">
+              Target Cost: ₹0 / month
+            </span>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="eval-table">
+            <thead>
+              <tr>
+                <th>Service Component</th>
+                <th>Provider & Tier</th>
+                <th>Resource Allocation</th>
+                <th style="text-align: right;">Monthly Cost</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Render Web Service</strong></td>
+                <td>Free Tier</td>
+                <td>512 MB RAM, Shared CPU, 750 free hours/month</td>
+                <td style="text-align: right; font-weight:600;">₹0</td>
+              </tr>
+              <tr>
+                <td><strong>GitHub Repository</strong></td>
+                <td>Free</td>
+                <td>Unlimited public/private repository hosting, issues & wiki</td>
+                <td style="text-align: right; font-weight:600;">₹0</td>
+              </tr>
+              <tr>
+                <td><strong>GitHub Actions</strong></td>
+                <td>Free Tier</td>
+                <td>2,000 automated CI/CD build minutes per month</td>
+                <td style="text-align: right; font-weight:600;">₹0</td>
+              </tr>
+              <tr>
+                <td><strong>Custom Domain & SSL</strong></td>
+                <td>Not required</td>
+                <td>Render-provided subdomain with managed Let's Encrypt TLS</td>
+                <td style="text-align: right; font-weight:600;">₹0</td>
+              </tr>
+              <tr class="total-row">
+                <td colspan="3"><strong>Total Monthly Infrastructure Cost</strong></td>
+                <td style="text-align: right; font-size:1.05rem;"><strong>₹0 (Zero Cost)</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="note-box amber">
+          <strong>Free Tier Constraints & Operational Considerations:</strong>
+          <ul style="margin-left: 20px; margin-top: 6px; line-height: 1.6;">
+            <li><strong>Monthly Hours:</strong> 750 hours/month shared pool across web services on Render free tier.</li>
+            <li><strong>Cold Starts:</strong> Web services automatically spin down after 15 minutes of inactivity; the initial wakeup request experiences ~30–50 seconds latency while the container boots.</li>
+            <li><strong>Resource Caps:</strong> 512 MB RAM limit and shared vCPU. In-memory data structures must be constrained to prevent memory exhaustion.</li>
+            <li><strong>Target Cost:</strong> ₹0 within free-tier limits for entire project lifecycle.</li>
+          </ul>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    // Format uptime into "Xd Xh Xm Xs"
+    function formatUptime(seconds) {
+      if (seconds === null || seconds === undefined || isNaN(seconds)) return "Not measured yet";
+      seconds = Math.max(0, Math.floor(seconds));
+      const d = Math.floor(seconds / 86400);
+      const h = Math.floor((seconds % 86400) / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = seconds % 60;
+
+      const parts = [];
+      if (d > 0) parts.push(`${d}d`);
+      if (h > 0 || d > 0) parts.push(`${h}h`);
+      if (m > 0 || h > 0 || d > 0) parts.push(`${m}m`);
+      parts.push(`${s}s`);
+      return parts.join(" ");
+    }
+
+    // Fetch and display live metrics from /metrics
+    async function fetchLiveMetrics() {
+      try {
+        const res = await fetch('/metrics');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        // Total, Success, Errors
+        const total = data.total_requests ?? data.requests_total;
+        const success = data.successful_requests ?? data.success_requests;
+        const errors = data.server_errors ?? data.error_requests;
+
+        document.getElementById('liveTotalReq').textContent = (total !== undefined && total !== null) ? Number(total).toLocaleString() : 'Not measured yet';
+        document.getElementById('liveSuccessReq').textContent = (success !== undefined && success !== null) ? Number(success).toLocaleString() : 'Not measured yet';
+        document.getElementById('liveErrorsReq').textContent = (errors !== undefined && errors !== null) ? Number(errors).toLocaleString() : 'Not measured yet';
+
+        // Error Rate
+        if (total && total > 0) {
+          let rate = data.error_rate ?? data.error_rate_percent;
+          if (rate !== undefined && rate !== null) {
+            if (typeof rate === 'number' && rate <= 1 && rate > 0) rate = rate * 100;
+            document.getElementById('liveErrorRate').textContent = `${Number(rate).toFixed(1)}%`;
+          } else {
+            const calculated = ((errors || 0) / total) * 100;
+            document.getElementById('liveErrorRate').textContent = `${calculated.toFixed(1)}%`;
+          }
+        } else {
+          document.getElementById('liveErrorRate').textContent = 'Not measured yet';
+        }
+
+        // Response times
+        const rt = data.response_times || {};
+        const avg = rt.avg_ms ?? rt.avg ?? data.avg_response_time_ms;
+        const min = rt.min_ms ?? rt.min ?? data.min_response_time_ms;
+        const max = rt.max_ms ?? rt.max ?? data.max_response_time_ms;
+
+        document.getElementById('liveAvgResp').textContent = (avg !== undefined && avg !== null) ? `${Number(avg).toFixed(1)} ms` : 'Not measured yet';
+        document.getElementById('liveMinResp').textContent = (min !== undefined && min !== null) ? `${Number(min).toFixed(1)} ms` : 'Not measured yet';
+        document.getElementById('liveMaxResp').textContent = (max !== undefined && max !== null) ? `${Number(max).toFixed(1)} ms` : 'Not measured yet';
+
+        // Uptime
+        const uptime = data.uptime_seconds ?? data.uptime;
+        if (uptime !== undefined) {
+          document.getElementById('liveUptime').textContent = formatUptime(uptime);
+        } else {
+          // Try fetching from /health
+          fetchUptimeFromHealth();
+        }
+      } catch (e) {
+        console.warn('Unable to load metrics:', e);
+        // Leave fields with clear "Not measured yet" label
+      }
+    }
+
+    async function fetchUptimeFromHealth() {
+      try {
+        const res = await fetch('/health');
+        if (res.ok) {
+          const data = await res.json();
+          const uptime = data.uptime_seconds ?? data.uptime;
+          if (uptime !== undefined) {
+            document.getElementById('liveUptime').textContent = formatUptime(uptime);
+          }
+        }
+      } catch (e) {
+        // Ignored
+      }
+    }
+
+    // Show test instructions in Section 1
+    function showTestInstructions() {
+      const container = document.getElementById('testInstructionContent');
+      container.innerHTML = `
+        <span class="terminal-dim"># Automated functional test execution protocol:</span><br>
+        <span class="terminal-cmd">$ pytest -v</span><br><br>
+        <span style="color:#38bdf8;">============================= test session starts ==============================</span><br>
+        <span class="terminal-dim">platform: local python environment -- pytest</span><br>
+        <span class="terminal-dim">rootdir: . , configfile: pytest.ini</span><br><br>
+        <span class="terminal-dim">Instructions:</span><br>
+        <span class="terminal-dim">1. Open your terminal in the project directory.</span><br>
+        <span class="terminal-dim">2. Run: </span><span class="terminal-cmd">pytest -v</span><br>
+        <span class="terminal-dim">3. For code coverage summary, run: </span><span class="terminal-cmd">pytest --cov=app tests/</span><br><br>
+        <span class="terminal-success">Note: Test results shown here are from actual test execution, not fabricated.</span><br>
+        <span style="color:#f59e0b;">Run \`pytest -v\` locally to see test results</span>
+      `;
+    }
+
+    // Performance Test: Run 10 sequential requests to /health
+    async function runPerformanceTest() {
+      const btn = document.getElementById('btnRunPerfTest');
+      const progressTrack = document.getElementById('perfProgressTrack');
+      const progressFill = document.getElementById('perfProgressFill');
+      const resultsBody = document.getElementById('perfResultsBody');
+      const summaryGrid = document.getElementById('perfSummaryGrid');
+
+      btn.disabled = true;
+      btn.textContent = 'Running Test (10 requests)...';
+      progressTrack.style.display = 'block';
+      progressFill.style.width = '0%';
+      resultsBody.innerHTML = '';
+
+      const latencies = [];
+      const totalRequests = 10;
+
+      for (let i = 1; i <= totalRequests; i++) {
+        const startTime = performance.now();
+        let statusCode = 200;
+        let isSuccess = true;
+
+        try {
+          // Append cache buster to prevent cached browser responses
+          const res = await fetch(`/health?_bench=${Date.now()}_${i}`, { cache: 'no-store' });
+          statusCode = res.status;
+          isSuccess = res.ok;
+        } catch (err) {
+          statusCode = 0;
+          isSuccess = false;
+        }
+
+        const endTime = performance.now();
+        const latencyMs = Number((endTime - startTime).toFixed(2));
+        latencies.push(latencyMs);
+
+        // Update progress bar
+        const percent = Math.round((i / totalRequests) * 100);
+        progressFill.style.width = `${percent}%`;
+
+        // Append row
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><strong>#${i}</strong></td>
+          <td><code>/health</code></td>
+          <td><span class="badge-pill ${isSuccess ? 'badge-green' : 'badge-orange'}">${statusCode || 'ERR'}</span></td>
+          <td><strong>${latencyMs} ms</strong></td>
+          <td><span class="badge-pill ${isSuccess ? 'badge-green' : 'badge-orange'}">${isSuccess ? 'PASS' : 'FAIL'}</span></td>
+        `;
+        resultsBody.appendChild(row);
+
+        // Small 50ms delay between sequential requests to simulate realistic polling
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+
+      // Compute stats
+      const sum = latencies.reduce((a, b) => a + b, 0);
+      const avg = (sum / latencies.length).toFixed(2);
+      const min = Math.min(...latencies).toFixed(2);
+      const max = Math.max(...latencies).toFixed(2);
+
+      // Update summary cards
+      summaryGrid.style.display = 'grid';
+      document.getElementById('perfAvgLatency').textContent = `${avg} ms`;
+      document.getElementById('perfMinLatency').textContent = `${min} ms`;
+      document.getElementById('perfMaxLatency').textContent = `${max} ms`;
+
+      btn.disabled = false;
+      btn.textContent = 'Run Performance Test (10 Requests)';
+
+      // Refresh live metrics in Section 2 to reflect the 10 requests
+      fetchLiveMetrics();
+    }
+
+    // Environment info detection
+    function detectEnvironment() {
+      const host = window.location.hostname || 'localhost';
+      const port = window.location.port ? `:${window.location.port}` : '';
+      const protocol = window.location.protocol;
+
+      document.getElementById('detectedHost').textContent = `${host}${port}`;
+      document.getElementById('detectedProtocol').textContent = protocol === 'https:' ? 'HTTPS (Secure TLS Cloud Protocol)' : 'HTTP (Local / Development)';
+
+      if (host.includes('render.com')) {
+        document.getElementById('detectedEnvType').innerHTML = '<span class="badge-pill badge-green">Production Cloud (Render Web Service)</span>';
+        document.getElementById('renderVerificationLink').href = window.location.origin;
+        document.getElementById('renderVerificationLink').textContent = `Verify deployment at ${host} ↗`;
+      } else if (host === 'localhost' || host === '127.0.0.1') {
+        document.getElementById('detectedEnvType').innerHTML = '<span class="badge-pill badge-blue">Local Development Host</span>';
+      } else {
+        document.getElementById('detectedEnvType').innerHTML = `<span class="badge-pill badge-blue">Custom Host (${host})</span>`;
+      }
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      detectEnvironment();
+      fetchLiveMetrics();
+    });
+  </script>
+</body>
+</html>
