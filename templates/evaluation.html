@@ -944,7 +944,7 @@
         // Total, Success, Errors
         const total = data.total_requests ?? data.requests_total;
         const success = data.successful_requests ?? data.success_requests;
-        const errors = data.server_errors ?? data.error_requests;
+        const errors = data.error_count ?? data.server_errors ?? data.error_requests;
 
         document.getElementById('liveTotalReq').textContent = (total !== undefined && total !== null) ? Number(total).toLocaleString() : 'Not measured yet';
         document.getElementById('liveSuccessReq').textContent = (success !== undefined && success !== null) ? Number(success).toLocaleString() : 'Not measured yet';
@@ -966,7 +966,7 @@
 
         // Response times
         const rt = data.response_times || {};
-        const avg = rt.avg_ms ?? rt.avg ?? data.avg_response_time_ms;
+        const avg = rt.avg_ms ?? rt.avg ?? data.average_response_time_ms ?? data.avg_response_time_ms;
         const min = rt.min_ms ?? rt.min ?? data.min_response_time_ms;
         const max = rt.max_ms ?? rt.max ?? data.max_response_time_ms;
 

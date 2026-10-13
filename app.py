@@ -40,15 +40,32 @@ EXCLUDED_PATH_PREFIXES = (
 )
 
 # Thread-safe in-memory metrics storage
+# Note: In multi-worker WSGI environments (e.g. Gunicorn -w > 1), each worker maintains
+# isolated in-memory counters. For persistent distributed metrics, external datastores
+# (e.g., Redis, Prometheus) would be used.
 metrics_lock = threading.Lock()
 metrics = {
     "total_requests": 0,
-    "successful_requests": 0,  # 2xx and 3xx
-    "error_count": 0,          # 5xx
+    "successful_requests": 0,  # 2xx and 3xx HTTP status codes
+    "error_count": 0,          # 5xx Server Errors only (4xx client errors are not counted as server errors)
     "response_time_samples": deque(maxlen=100),  # Max 100 recent response time samples (ms)
     "recent_requests": deque(maxlen=50),         # Max 50 recent requests metadata
     "last_health_check": None                    # ISO8601 string or None
 }
+
+
+def reset_metrics():
+    """
+    Reset all in-memory metrics counters and buffers.
+    Used for test isolation and clean-state resets.
+    """
+    with metrics_lock:
+        metrics["total_requests"] = 0
+        metrics["successful_requests"] = 0
+        metrics["error_count"] = 0
+        metrics["response_time_samples"].clear()
+        metrics["recent_requests"].clear()
+        metrics["last_health_check"] = None
 
 
 def is_excluded_path(path: str) -> bool:
@@ -227,10 +244,14 @@ def get_metrics():
         "average_response_time_ms": avg_resp_time,
         "min_response_time_ms": min_resp_time,
         "max_response_time_ms": max_resp_time,
+        "response_time_samples": samples,
         "error_rate": error_rate,
         "uptime_seconds": uptime_sec,
         "last_health_check": last_check,
-        "in_memory_notice": "Metrics are stored in memory and reset when the application restarts."
+        "in_memory_notice": (
+            "Metrics are stored in process memory and reset when the application restarts. "
+            "In multi-worker environments (e.g. Gunicorn), metrics are worker-isolated."
+        )
     }), 200
 
 

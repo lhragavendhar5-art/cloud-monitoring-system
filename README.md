@@ -131,33 +131,33 @@ pytest -v
 
 ```text
 ============================= test session starts =============================
-platform win32 -- Python 3.12.x, pytest-8.3.5, pluggy-1.x.x -- ...
+platform win32 -- Python 3.12+ / 3.14+, pytest-8.3.5, pluggy-1.6.0
 cachedir: .pytest_cache
 rootdir: c:\Users\Ragav\OneDrive\Documents\CC
-collected 19 items
+collected 20 items
 
 test_app.py::test_health_endpoint_status PASSED                          [  5%]
 test_app.py::test_health_endpoint_json_format PASSED                     [ 10%]
-test_app.py::test_health_endpoint_content_type PASSED                    [ 15%]
-test_app.py::test_metrics_endpoint_status PASSED                         [ 21%]
-test_app.py::test_metrics_endpoint_json_format PASSED                    [ 26%]
-test_app.py::test_metrics_initial_values PASSED                          [ 31%]
-test_app.py::test_dashboard_renders PASSED                               [ 36%]
-test_app.py::test_dashboard_content_type PASSED                          [ 42%]
-test_app.py::test_dashboard_contains_key_elements PASSED                 [ 47%]
-test_app.py::test_activity_endpoint_status PASSED                        [ 52%]
-test_app.py::test_activity_endpoint_json_format PASSED                   [ 57%]
-test_app.py::test_activity_recent_requests_is_list PASSED                [ 63%]
-test_app.py::test_simulate_error_disabled_by_default PASSED             [ 68%]
-test_app.py::test_simulate_error_returns_json_when_disabled PASSED      [ 73%]
-test_app.py::test_evaluation_page_renders PASSED                         [ 78%]
-test_app.py::test_evaluation_page_content PASSED                         [ 84%]
-test_app.py::test_404_handler PASSED                                     [ 89%]
-test_app.py::test_404_returns_json PASSED                                [ 94%]
-test_app.py::test_metrics_increment_after_request PASSED                  [100%]
-test_app.py::test_security_headers PASSED                                [100%]
+test_app.py::test_health_updates_last_health_check PASSED                [ 15%]
+test_app.py::test_metrics_endpoint_status PASSED                         [ 20%]
+test_app.py::test_metrics_endpoint_json_format PASSED                    [ 25%]
+test_app.py::test_metrics_initial_empty_state PASSED                     [ 30%]
+test_app.py::test_dashboard_renders PASSED                               [ 35%]
+test_app.py::test_dashboard_contains_key_elements PASSED                 [ 40%]
+test_app.py::test_evaluation_page_renders PASSED                         [ 45%]
+test_app.py::test_evaluation_page_content PASSED                         [ 50%]
+test_app.py::test_activity_endpoint_status PASSED                        [ 55%]
+test_app.py::test_activity_endpoint_json_format PASSED                   [ 60%]
+test_app.py::test_metrics_increment_on_monitored_traffic PASSED          [ 65%]
+test_app.py::test_excluded_paths_do_not_inflate_metrics PASSED           [ 70%]
+test_app.py::test_response_time_statistics_calculation PASSED            [ 75%]
+test_app.py::test_simulate_error_disabled_by_default PASSED              [ 80%]
+test_app.py::test_simulate_error_when_enabled PASSED                     [ 85%]
+test_app.py::test_404_handler_structure PASSED                           [ 90%]
+test_app.py::test_404_not_counted_as_server_error PASSED                 [ 95%]
+test_app.py::test_security_headers_present PASSED                        [100%]
 
-============================== 19 passed in 0.xxs ==============================
+============================= 20 passed in 0.20s ==============================
 ```
 
 ---
@@ -261,9 +261,9 @@ The dashboard at `/` provides an administrative overview of service health:
 - It presents visual indicators for current uptime, total processed requests, error percentages, and latency distribution.
 
 ### Metrics Collected
-- **Total Requests (`total_requests`)**: Cumulative counter of incoming HTTP requests handled by the instance.
+- **Total Requests (`total_requests`)**: Cumulative counter of incoming HTTP requests handled by the instance (excluding monitoring endpoints `/health`, `/metrics`, and `/api/*`).
 - **Successful Requests (`successful_requests`)**: Counter of requests yielding 2xx or 3xx HTTP status codes.
-- **Error Count (`error_count`)**: Counter of requests yielding 4xx client errors or 5xx server errors.
+- **Server Error Count (`error_count`)**: Counter of requests resulting in 5xx internal server errors. (Note: 4xx client errors like 404/403 are tracked in `total_requests` but are not counted as server errors, ensuring precise DevOps error rate calculation).
 - **Latency Statistics**:
   - `average_response_time_ms`: Arithmetic mean of response times across tracked requests.
   - `min_response_time_ms`: Lowest observed response time in milliseconds.
@@ -308,11 +308,14 @@ The entire application and CI/CD lifecycle operates within provider Free Tiers:
 
 ---
 
-## 14. Important Notes
-
-- **In-Memory Metrics Notice**: Operational metrics (`total_requests`, `error_count`, latency records) are stored in memory within the active Python process. If the application server restarts, crashes, or redeploys, these counters reset to initial zero values.
-- **Render Free Tier Sleep Policy**: Render puts free web services into a sleeping state after 15 minutes of inbound network inactivity.
-- **Cold Starts**: When an incoming request arrives while the service is spun down, Render will boot the container. This causes an initial cold start latency delay of approximately 30–50 seconds for the first request. Subsequent requests will be served with normal sub-second response times.
+## 14. Important Notes & Production Considerations
+ 
+- **In-Memory Metrics Isolation**: Operational metrics (`total_requests`, `error_count`, latency records) are maintained in process memory within the running Python interpreter:
+  - If the web service restarts, redeploys, or crashes, in-memory counters reset to initial zero values.
+  - In multi-worker WSGI configurations (such as `gunicorn -w 4 app:app`), each worker process maintains its own isolated in-memory telemetry. For multi-worker or multi-server enterprise deployments, an external centralized datastore (e.g., Redis, Prometheus, or TimescaleDB) should be utilized.
+- **Render Free Tier Hosting Terms**: Render offers free-tier web services with an allocation of 750 free instance hours per month. These figures represent current cloud provider estimates and are subject to provider policy updates. Target prototype cost is ₹0 ($0.00) within these tier limits.
+- **Cold Start Latency**: Under Render's free tier sleep policy, inactive web services spin down after 15 minutes of zero traffic. When a new request arrives, a container wake-up sequence occurs, which may introduce an estimated ~30–50 second latency delay for the initial request. Subsequent requests are handled with standard sub-second latency.
+- **CI/CD Deployment Webhook Trigger**: The GitHub Actions deployment stage executes an HTTP POST request to the Render Deploy Hook. A successful HTTP response confirms that Render has queued the deployment trigger; it does not indicate that the remote container build, dependency installation, or rollout has concluded. Remote build status should be confirmed directly on the Render dashboard.
 
 ---
 

@@ -1114,7 +1114,7 @@
 
         // Response Time
         const latencyCell = document.createElement('td');
-        const lat = req.response_time_ms ?? req.duration_ms ?? req.latency;
+        const lat = req.response_time ?? req.response_time_ms ?? req.duration_ms ?? req.latency;
         if (lat !== undefined && lat !== null) {
           latencyCell.textContent = `${Number(lat).toFixed(1)} ms`;
         } else {
@@ -1186,7 +1186,7 @@
           // Metrics numbers
           const total = metricsData.total_requests ?? metricsData.requests_total ?? 0;
           const successful = metricsData.successful_requests ?? metricsData.success_requests ?? 0;
-          const errors = metricsData.server_errors ?? metricsData.error_requests ?? 0;
+          const errors = metricsData.error_count ?? metricsData.server_errors ?? metricsData.error_requests ?? 0;
 
           document.getElementById('valTotalRequests').textContent = total.toLocaleString();
           document.getElementById('valSuccessfulRequests').textContent = successful.toLocaleString();
@@ -1213,7 +1213,7 @@
           const maxElem = document.getElementById('valMaxResp');
 
           const rt = metricsData.response_times || {};
-          const avgVal = rt.avg_ms ?? rt.avg ?? metricsData.avg_response_time_ms;
+          const avgVal = rt.avg_ms ?? rt.avg ?? metricsData.average_response_time_ms ?? metricsData.avg_response_time_ms;
           const minVal = rt.min_ms ?? rt.min ?? metricsData.min_response_time_ms;
           const maxVal = rt.max_ms ?? rt.max ?? metricsData.max_response_time_ms;
 
@@ -1221,9 +1221,10 @@
           minElem.textContent = (minVal !== undefined && minVal !== null) ? `${Number(minVal).toFixed(1)} ms` : 'No data yet';
           maxElem.textContent = (maxVal !== undefined && maxVal !== null) ? `${Number(maxVal).toFixed(1)} ms` : 'No data yet';
 
-          // Extract response time samples
-          samples = metricsData.response_time_samples ?? metricsData.samples ?? [];
-          updateResponseTimeChart(samples);
+          // Extract response time samples from metrics if available
+          if (Array.isArray(metricsData.response_time_samples) && metricsData.response_time_samples.length > 0) {
+            samples = metricsData.response_time_samples;
+          }
 
           // If uptime was in metrics and not health
           if (uptimeDisplay.textContent === '--' && metricsData.uptime_seconds !== undefined) {
@@ -1231,25 +1232,23 @@
           }
         } else {
           hasError = true;
-          updateResponseTimeChart([]);
         }
 
         // Process /api/activity
         let recentList = [];
         if (activityRes.status === 'fulfilled' && activityRes.value.ok) {
           const activityData = await activityRes.value.json();
+          if (activityData && Array.isArray(activityData.response_time_samples) && activityData.response_time_samples.length > 0) {
+            samples = activityData.response_time_samples;
+          }
           if (Array.isArray(activityData)) {
             recentList = activityData;
           } else if (activityData && Array.isArray(activityData.recent_requests)) {
             recentList = activityData.recent_requests;
           }
-        } else {
-          // If /api/activity failed or not implemented, check if metrics had recent_requests
-          if (metricsRes.status === 'fulfilled' && metricsRes.value.ok) {
-            // Already checked
-          }
         }
 
+        updateResponseTimeChart(samples);
         updateActivityChart(recentList);
         renderRecentRequestsTable(recentList);
 
