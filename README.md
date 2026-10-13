@@ -2,9 +2,14 @@
 
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-3.1.1-000000?style=flat&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
-[![Render](https://img.shields.io/badge/Render-Deployed-46E3B7?style=flat&logo=render&logoColor=white)](https://render.com/)
-[![GitHub Actions](https://img.shields.io/badge/CI%2FCD-GitHub_Actions-2088FF?style=flat&logo=github-actions&logoColor=white)](https://github.com/features/actions)
+[![Render](https://img.shields.io/badge/Render-Deployed%20Live-46E3B7?style=flat&logo=render&logoColor=white)](https://cloud-monitoring-system.onrender.com)
+[![GitHub Actions](https://img.shields.io/badge/CI%2FCD-GitHub_Actions-2088FF?style=flat&logo=github-actions&logoColor=white)](https://github.com/lhragavendhar5-art/cloud-monitoring-system/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+> 🌐 **Live Cloud Deployment**: [https://cloud-monitoring-system.onrender.com](https://cloud-monitoring-system.onrender.com)  
+> 📊 **Live Telemetry API**: [https://cloud-monitoring-system.onrender.com/metrics](https://cloud-monitoring-system.onrender.com/metrics)  
+> 🩺 **Live Health Probe**: [https://cloud-monitoring-system.onrender.com/health](https://cloud-monitoring-system.onrender.com/health)  
+> 📋 **Evaluation & Performance Testing**: [https://cloud-monitoring-system.onrender.com/evaluation](https://cloud-monitoring-system.onrender.com/evaluation)
 
 A lightweight, production-ready Cloud-Based Application Deployment and Monitoring System developed in Python with Flask and Gunicorn. The system features an interactive real-time observability dashboard, comprehensive telemetry API endpoints, automated CI/CD pipelines via GitHub Actions, and containerless cloud deployment to Render.
 
